@@ -236,36 +236,11 @@
           <span class="t1">Post-quantum</span>
           <span class="t2">security.</span>
         </h1>
-        <div class="hero-body">
-          <div>
+        <div>
             <p class="hero-desc">The cryptographic algorithms protecting the world today — RSA, ECDSA, Diffie-Hellman — will be broken by quantum computers. PTH Meridian has already built the replacement. Open source. Canadian. Independently auditable. NIST FIPS 203/204/205 compliant. Ready now.</p>
             <div class="hero-actions">
               <a href="https://github.com/PTHMeridian/AKR-NaOS" target="_blank" class="btn-primary">AKR Naos on GitHub →</a>
               <a href="https://github.com/PTHMeridian/AKR-KeyGen" target="_blank" class="btn-ghost">AKR KeyGen ↗</a>
-            </div>
-          </div>
-          <div class="terminal">
-            <div class="terminal-bar">
-              <div class="t-dot red"></div>
-              <div class="t-dot yellow"></div>
-              <div class="t-dot green"></div>
-              <div class="t-title">akr-naos — tsx src/index.ts</div>
-            </div>
-            <div class="terminal-body">
-              <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">npm run dev</span></div>
-              <div class="t-line"><span class="t-out">AKR Naos - Nested Authentication Operations Suite</span></div>
-              <div class="t-line"><span class="t-out">SA AT Cryptographics</span></div>
-              <div class="t-line" style="margin-top:.5rem;"><span class="t-out success">Phase 1  Shamir Secret Sharing     OPERATIONAL</span></div>
-              <div class="t-line"><span class="t-out success">Phase 2  Key Vault (Argon2id)      OPERATIONAL</span></div>
-              <div class="t-line"><span class="t-out success">Phase 3  Certificate Authority     OPERATIONAL</span></div>
-              <div class="t-line"><span class="t-out success">Phase 4  Secure Channel            OPERATIONAL</span></div>
-              <div class="t-line"><span class="t-out success">Phase 5  Audit Engine + HMIT       OPERATIONAL</span></div>
-              <div class="t-line"><span class="t-out success">Phase 6  Identity Wallet + ZKP     OPERATIONAL</span></div>
-              <div class="t-line" style="margin-top:.5rem;"><span class="t-out warn">Step 3   Security Audit            SEEKING</span></div>
-              <div class="t-line"><span class="t-out success">All other hardening steps          COMPLETE</span></div>
-              <div class="t-line" style="margin-top:.5rem;"><span class="t-out">Chain integrity: true (18 entries)</span></div>
-              <div class="t-line"><span class="t-out success">CVE-AKR-NAOS-2026-001              PATCHED</span></div>
-              <div class="t-line" style="margin-top:.5rem;"><span class="t-prompt">$</span><span class="t-cmd" id="typing-cmd"></span><span class="t-cursor"></span></div>
             </div>
           </div>
         </div>
@@ -549,120 +524,132 @@
       'console.log("Chain integrity:", audit.verifyIntegrity().valid);',
     ];
 
-    // Continuous ambient code typing — always active across whole screen
-    const codeSnippets = [
-      'const { pk, sk } = ml_kem768.keygen();',
-      'const sig = ml_dsa65.sign(msg, sk);',
-      'await argon2id({ pass, salt, mem: 65536 });',
-      'zkp.proveRange(value, 18, 150);',
-      'shamir.split(secret, { t: 3, n: 5 });',
-      'audit.record("KEY_STORED", id, "INFO");',
-      'ocsp.query({ serial: cert.serial });',
-      'hsm.generateKey("ML-DSA-65", ["sign"]);',
-      'threshold.contributeSignature(sid, pid);',
-      'pki.issueCertificate({ cn: "alice" });',
-      'zkp.verifyRange(proof); // false revealed',
-      'wallet.create(did, sigKey, encKey);',
-      'channel.establishSession(id, secret);',
-      'import { ml_kem768 } from "@noble/pq";',
-      'const valid = ml_dsa65.verify(sig, msg);',
-      'attestation.verify(stmt, policy);',
-      'merkle.buildTree(authorizedRoles);',
-      'vault.store(key, pwd, { algo: "ML-KEM" });',
-      'git commit -m "feat: ZKP v2 bounds fix"',
-      'npm run dev // All 6 phases OPERATIONAL',
-      'chain.verify(); // integrity: true',
-      'const { ciphertext } = kem.encapsulate(pk);',
-      'hmit.triggerAlert("CRITICAL", reason);',
+    // Continuous ambient background — code lines type forward, stay, fade
+    // Multiple lines active simultaneously across the full screen
+    const snippets = [
+      'const { publicKey, secretKey } = ml_kem768.keygen();',
+      'const signature = ml_dsa65.sign(message, secretKey);',
+      'const valid = ml_dsa65.verify(sig, msg, pk); // true',
+      'const derived = await argon2id({ password, salt, memoryCost: 65536 });',
+      'const proof = zkp.proveRange(value, 18, 150); // value hidden',
+      'const result = zkp.verifyRange(proof); // revealed: false',
+      'const shares = shamir.split(secret, { threshold: 3, total: 5 });',
+      'const cert = pki.issueCertificate({ cn: "alice@pth-meridian.io" });',
+      'const ocsp = responder.query({ serial: cert.serialNumber });',
+      'audit.record("KEY_GENERATED", keyId, "INFO", {}, "system");',
+      'const key = await hsm.generateKey("ML-DSA-65", ["sign", "verify"]);',
+      'threshold.contributeSignature(sessionId, participantId, share);',
+      'const attest = hsm.getAttestation(keyId); // neverExtractable: true',
+      'const did = wallet.create("Alice", signingKeyId, encryptionKeyId);',
+      'import { ml_kem768 } from "@noble/post-quantum/ml-kem.js";',
+      'import { ml_dsa65 } from "@noble/post-quantum/ml-dsa.js";',
+      'const chain = audit.verifyIntegrity(); // valid: true, checked: 18',
+      'const membership = zkp.proveMembership(role, authorizedRoles);',
+      'git commit -m "feat: Phase 6 — Identity Wallet + ZKP — COMPLETE"',
+      'const { encryptKey, macKey } = kdf.deriveKeyForVault(password);',
     ];
 
-    const LANE_COUNT = 22;   // number of horizontal lanes
-    const STREAMS = [];      // one or more typing streams per lane
-
-    class Stream {
-      constructor(laneY, laneH) {
-        this.laneY = laneY;
-        this.laneH = laneH;
-        this.reset();
+    // Each Line lives at a fixed Y, types forward, holds, fades, restarts
+    class BgLine {
+      constructor(y) {
+        this.y = y;
+        this.init();
       }
-      reset() {
-        this.text = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
-        this.x = Math.random() * W;
-        this.y = this.laneY + (Math.random() * this.laneH * 0.6);
-        this.visible = 0;
-        this.phase = 'typing';  // typing | holding | fading
-        this.holdMax = 90 + Math.random() * 180;
+      init() {
+        this.text = snippets[Math.floor(Math.random() * snippets.length)];
+        // Start at random X so lines don't all begin at left edge
+        this.startX = Math.random() * W * 0.6 - W * 0.1;
+        this.charCount = 0;
+        this.state = 'typing';
         this.holdTimer = 0;
-        this.typeRate = Math.random() * 1.2 + 0.6;
-        this.typeAcc = 0;
-        this.alpha = Math.random() * 0.18 + 0.06;
+        this.holdDuration = 120 + Math.random() * 200;
+        this.alpha = 0;
+        this.targetAlpha = Math.random() * 0.22 + 0.08;
+        this.typeDelay = 0;
+        this.typeRate = Math.floor(Math.random() * 2) + 1;
         this.fontSize = Math.floor(Math.random() * 3) + 10;
         const r = Math.random();
-        this.color = r < 0.72 ? '#00FF41' : r < 0.86 ? '#00CC33' : r < 0.93 ? '#00E5FF' : '#39FF14';
+        this.color = r < 0.70 ? '#00FF41'
+                   : r < 0.84 ? '#00CC33'
+                   : r < 0.93 ? '#00E5FF'
+                   : '#39FF14';
       }
       update() {
-        if (this.phase === 'typing') {
-          this.typeAcc += this.typeRate;
-          if (this.typeAcc >= 1) {
-            this.visible = Math.min(this.visible + Math.floor(this.typeAcc), this.text.length);
-            this.typeAcc = 0;
+        if (this.state === 'typing') {
+          // Fade in gently as typing starts
+          this.alpha = Math.min(this.alpha + 0.015, this.targetAlpha);
+          this.typeDelay++;
+          if (this.typeDelay % this.typeRate === 0) {
+            this.charCount = Math.min(this.charCount + 1, this.text.length);
           }
-          if (this.visible >= this.text.length) { this.phase = 'holding'; }
-        } else if (this.phase === 'holding') {
+          if (this.charCount >= this.text.length) {
+            this.state = 'holding';
+          }
+        } else if (this.state === 'holding') {
           this.holdTimer++;
-          if (this.holdTimer >= this.holdMax) { this.phase = 'fading'; }
-        } else {
-          this.alpha -= 0.003;
-          if (this.alpha <= 0) { this.reset(); }
+          if (this.holdTimer >= this.holdDuration) {
+            this.state = 'fading';
+          }
+        } else if (this.state === 'fading') {
+          this.alpha -= 0.008;
+          if (this.alpha <= 0) {
+            this.alpha = 0;
+            this.init(); // restart with new snippet
+          }
         }
       }
       draw() {
-        if (this.visible <= 0 || this.alpha <= 0) return;
-        ctx.font = `${this.fontSize}px IBM Plex Mono, monospace`;
-        const shown = this.text.substring(0, this.visible);
+        if (this.alpha <= 0 || this.charCount === 0) return;
         ctx.globalAlpha = this.alpha;
+        ctx.font = `${this.fontSize}px IBM Plex Mono, monospace`;
         ctx.fillStyle = this.color;
-        ctx.fillText(shown, this.x, this.y);
-        // Bright cursor at tip while typing
-        if (this.phase === 'typing' && this.visible < this.text.length) {
-          ctx.globalAlpha = Math.min(this.alpha * 2.5, 1);
-          ctx.fillStyle = '#CCFFCC';
+        const shown = this.text.substring(0, this.charCount);
+        ctx.fillText(shown, this.startX, this.y);
+        // Subtle cursor while typing
+        if (this.state === 'typing' && this.charCount < this.text.length) {
+          ctx.globalAlpha = this.alpha * 1.8;
+          ctx.fillStyle = '#AAFFAA';
           const w = ctx.measureText(shown).width;
-          ctx.fillText(this.text[this.visible], this.x + w, this.y);
+          ctx.fillRect(this.startX + w + 1, this.y - this.fontSize + 3, 7, this.fontSize - 2);
         }
         ctx.globalAlpha = 1;
       }
     }
 
-    function buildStreams() {
-      STREAMS.length = 0;
-      const laneH = H / LANE_COUNT;
-      for (let lane = 0; lane < LANE_COUNT; lane++) {
-        const laneY = lane * laneH;
-        // 2-4 streams per lane, staggered so screen always has activity
-        const count = Math.floor(Math.random() * 3) + 2;
-        for (let s = 0; s < count; s++) {
-          const stream = new Stream(laneY, laneH);
-          // Stagger initial visible so they don't all start together
-          stream.visible = Math.floor(Math.random() * stream.text.length);
-          if (stream.visible >= stream.text.length) {
-            stream.phase = 'holding';
-            stream.holdTimer = Math.floor(Math.random() * stream.holdMax);
-          }
-          STREAMS.push(stream);
+    let lines = [];
+
+    function buildLines() {
+      lines = [];
+      const lineSpacing = Math.max(22, Math.floor(H / 26));
+      for (let y = lineSpacing; y < H - 10; y += lineSpacing) {
+        const line = new BgLine(y);
+        // Stagger start states so screen is active from the beginning
+        const rand = Math.random();
+        if (rand < 0.33) {
+          line.charCount = Math.floor(Math.random() * line.text.length);
+          line.state = 'typing';
+        } else if (rand < 0.66) {
+          line.charCount = line.text.length;
+          line.state = 'holding';
+          line.holdTimer = Math.floor(Math.random() * line.holdDuration);
+        } else {
+          line.charCount = line.text.length;
+          line.state = 'fading';
+          line.alpha = line.targetAlpha * Math.random();
         }
+        lines.push(line);
       }
     }
 
     function resize() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      buildStreams();
+      buildLines();
     }
 
     function drawCode() {
       ctx.clearRect(0, 0, W, H);
-      STREAMS.forEach(s => { s.update(); s.draw(); });
+      lines.forEach(l => { l.update(); l.draw(); });
       requestAnimationFrame(drawCode);
     }
 
@@ -670,45 +657,6 @@
     resize();
     drawCode();
 
-    // ============================================================
-    // TYPING EFFECT in terminal
-    // ============================================================
-    const commands = [
-      'verify --cert alice@pth-meridian.io',
-      'zkp prove --type range --min 18 --max 150',
-      'hsm generate --algo ML-DSA-65 --usage sign',
-      'threshold sign --op ISSUE_CA --required 3',
-      'audit verify --chain-length 18',
-      'ocsp query --cert CERT-1776...',
-    ];
-    let cmdIndex = 0, charIndex = 0, typing = true;
-    const typingEl = document.getElementById('typing-cmd');
-
-    function typeEffect() {
-      if (!typingEl) return;
-      const cmd = commands[cmdIndex];
-      if (typing) {
-        if (charIndex < cmd.length) {
-          typingEl.textContent += cmd[charIndex];
-          charIndex++;
-          setTimeout(typeEffect, Math.random() * 60 + 40);
-        } else {
-          typing = false;
-          setTimeout(typeEffect, 2000);
-        }
-      } else {
-        if (charIndex > 0) {
-          typingEl.textContent = cmd.substring(0, charIndex - 1);
-          charIndex--;
-          setTimeout(typeEffect, 20);
-        } else {
-          typing = true;
-          cmdIndex = (cmdIndex + 1) % commands.length;
-          setTimeout(typeEffect, 400);
-        }
-      }
-    }
-    setTimeout(typeEffect, 2000);
 
     // Nav
     window.addEventListener('scroll', () => {
