@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PTH Meridian Security — Post-quantum cryptographic infrastructure. AKR KeyGen and AKR Naos. NIST FIPS 203/204/205 compliant." />
+  <title>Security — PTH Meridian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void:       #040810;
+      --deep:       #070E1C;
+      --surface:    #0C1628;
+      --raised:     #111E35;
+      --border:     #1A2D50;
+      --border-hi:  #243D6E;
+      --accent:     #00E5FF;
+      --accent-dim: #007A8C;
+      --accent-glow:rgba(0,229,255,0.12);
+      --accent2:    #00BFA5;
+      --text:       #D4E2F4;
+      --text-muted: #4A6490;
+      --text-dim:   #243050;
+      --font-display:'Barlow Condensed', sans-serif;
+      --font-body:  'IBM Plex Sans', sans-serif;
+      --font-mono:  'IBM Plex Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--void);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--accent); color: var(--void); }
+    #quantum-field {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+      pointer-events: none;
+      z-index: 1;
+    }
+    nav, main, footer { position: relative; z-index: 2; }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      background: rgba(4,8,16,0.85);
+      backdrop-filter: blur(20px);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+    }
+    .nav-logo-mark {
+      width: 32px; height: 32px;
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow), inset 0 0 12px var(--accent-glow);
+      animation: pulse-border 3s ease-in-out infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 8px var(--accent-glow), inset 0 0 8px var(--accent-glow); }
+      50% { box-shadow: 0 0 20px rgba(0,229,255,0.25), inset 0 0 20px rgba(0,229,255,0.1); }
+    }
+    .nav-logo-text { display: flex; flex-direction: column; gap: 1px; }
+    .nav-logo-name {
+      font-family: var(--font-display);
+      font-size: 1rem; font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .nav-logo-sub {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      color: var(--accent-dim);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--accent2);
+      letter-spacing: 0.1em;
+    }
+    .nav-status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent2);
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .nav-cta {
+      border: 1px solid var(--accent-dim) !important;
+      padding: 0.35rem 1rem;
+      color: var(--accent) !important;
+      transition: all 0.2s !important;
+    }
+    .nav-cta:hover {
+      background: var(--accent) !important;
+      color: var(--void) !important;
+    }
+
+    /* HERO */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 0 6rem;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      width: 100%;
+    }
+    .hero-pre {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: slideIn 0.6s ease forwards 0.3s;
+    }
+    .hero-pre-line { width: 40px; height: 1px; background: var(--accent); }
+    .hero-pre-text {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 10vw, 9rem);
+      font-weight: 800;
+      line-height: 0.96;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: slideIn 0.7s ease forwards 0.5s;
+    }
+    .hero-title-main { display: block; color: var(--text); }
+    .hero-title-accent {
+      display: block;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: start;
+      opacity: 0;
+      animation: slideIn 0.7s ease forwards 0.8s;
+    }
+    .hero-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.85;
+      margin-bottom: 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--accent);
+      color: var(--void);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 0.9rem 2rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    }
+    .btn-primary:hover {
+      background: #fff;
+      box-shadow: 0 0 30px rgba(0,229,255,0.4);
+      transform: translateY(-2px);
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      padding: 0.9rem 1.5rem;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border-hi); }
+
+    /* FIPS BADGES */
+    .fips-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .fips-card {
+      background: var(--deep);
+      padding: 1.5rem;
+      transition: background 0.2s;
+    }
+    .fips-card:hover { background: var(--surface); }
+    .fips-val {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .fips-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      line-height: 1.4;
+    }
+
+    /* TICKER */
+    .ticker {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 0;
+      overflow: hidden;
+      background: var(--deep);
+    }
+    .ticker-track {
+      display: flex;
+      gap: 3rem;
+      animation: ticker 30s linear infinite;
+      white-space: nowrap;
+    }
+    .ticker-item {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+    .ticker-item span { color: var(--accent); }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* SECTIONS */
+    section { padding: 7rem 0; }
+    .section-header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2rem;
+      align-items: start;
+      margin-bottom: 4rem;
+    }
+    .section-number {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--text-dim);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.05;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .section-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.8;
+    }
+
+    /* PRODUCT LIST */
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .product-item {
+      background: var(--deep);
+      padding: 2.5rem 3rem;
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 2rem;
+      align-items: start;
+      transition: background 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .product-item:hover { background: var(--surface); }
+    .product-item:hover .product-arrow { transform: translate(4px, -4px); color: var(--accent); }
+    .product-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      padding-top: 0.35rem;
+    }
+    .product-name {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .product-fullname {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--accent-dim);
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+    .product-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+    .product-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      background: var(--raised);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      letter-spacing: 0.06em;
+    }
+    .chip-accent { color: var(--accent); border-color: var(--accent-dim); }
+    .product-arrow {
+      font-size: 1.25rem;
+      color: var(--border-hi);
+      transition: all 0.2s;
+      padding-top: 0.25rem;
+    }
+
+    /* THREAT MODEL */
+    #threats { background: var(--deep); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .threat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+    .threat-card {
+      background: var(--surface);
+      padding: 2rem;
+      transition: background 0.2s;
+    }
+    .threat-card:hover { background: var(--raised); }
+    .threat-icon {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: #FF4444;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .threat-icon::before { content: '⚠'; }
+    .threat-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
+    }
+    .threat-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .threat-status {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .threat-status.defeated { color: var(--accent2); }
+    .threat-status.mitigated { color: #FFB300; }
+
+    /* HARDENING */
+    .hardening-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .hardening-item {
+      background: var(--deep);
+      padding: 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 1.5rem;
+      align-items: center;
+      transition: background 0.2s;
+    }
+    .hardening-item:hover { background: var(--surface); }
+    .hardening-step {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+    .hardening-name {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.2rem;
+    }
+    .hardening-desc {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .hardening-badge {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+    .badge-done { color: var(--accent2); border-color: var(--accent2); }
+    .badge-pending { color: #FFB300; border-color: #FFB300; }
+
+    /* WHY QUANTUM */
+    .why-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    .why-statement {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+    .why-statement .hl {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .why-body {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.85;
+      margin-bottom: 1.5rem;
+    }
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .timeline-item {
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 1rem;
+      align-items: center;
+      transition: background 0.2s;
+    }
+    .timeline-item:hover { background: var(--raised); }
+    .timeline-year {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+    .timeline-event {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      line-height: 1.5;
+    }
+    .timeline-event strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+    }
+
+    /* CONTACT STRIP */
+    #contact-strip {
+      background: var(--deep);
+      border-top: 1px solid var(--border);
+      padding: 5rem 0;
+    }
+    .contact-strip-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+    .contact-strip-text {}
+    .contact-strip-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .contact-strip-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 480px;
+    }
+    .contact-strip-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    /* FOOTER */
+    footer {
+      background: var(--void);
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 0;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .footer-left { display: flex; align-items: center; gap: 2rem; }
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+    .footer-links { display: flex; gap: 2rem; list-style: none; }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+    .footer-credo {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #FFB300;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+    }
+
+    /* ANIMATIONS */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* RESPONSIVE */
+    @media (max-width: 860px) {
+      .hero-body, .why-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .threat-grid { grid-template-columns: 1fr; }
+      .section-header { grid-template-columns: 1fr; gap: 1rem; }
+      .section-number { font-size: 3rem; }
+      .product-item { grid-template-columns: 1fr; gap: 1rem; padding: 2rem; }
+      .product-num { display: none; }
+      .hardening-item { grid-template-columns: 1fr; gap: 0.5rem; }
+      .nav-links { display: none; }
+      .fips-grid { grid-template-columns: 1fr 1fr; }
+      .contact-strip-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="quantum-field"></canvas>
+
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <div class="nav-logo-mark">PTH</div>
+        <div class="nav-logo-text">
+          <div class="nav-logo-name">PTH Meridian</div>
+          <div class="nav-logo-sub">SA'AT Cryptographics · Calgary, CA</div>
+        </div>
+      </a>
+      <div class="nav-status">
+        <div class="nav-status-dot"></div>
+        FIPS 203 / 204 / 205 — POST-QUANTUM READY
+      </div>
+      <ul class="nav-links">
+        <li><a href="security.html" class="active">Security</a></li>
+        <li><a href="health.html">Health</a></li>
+        <li><a href="energy.html">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+        <li><a href="index.html#contact" class="nav-cta">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- HERO -->
+    <section id="hero">
+      <div class="container">
+        <div class="hero-pre">
+          <div class="hero-pre-line"></div>
+          <div class="hero-pre-text">SA'AT Cryptographics — PTH Meridian</div>
+        </div>
+        <h1 class="hero-title">
+          <span class="hero-title-main">Post-quantum</span>
+          <span class="hero-title-accent">security.</span>
+        </h1>
+        <div class="hero-body">
+          <div>
+            <p class="hero-desc">
+              The cryptographic algorithms protecting the world today — RSA, ECDSA, Diffie-Hellman — will be broken by quantum computers within a decade. PTH Meridian has already built the replacement. Open source. Canadian. Independently auditable. Ready now.
+            </p>
+            <div class="hero-actions">
+              <a href="https://github.com/PTHMeridian/AKR-NaOS" target="_blank" class="btn-primary">AKR Naos on GitHub →</a>
+              <a href="https://github.com/PTHMeridian/AKR-KeyGen" target="_blank" class="btn-ghost">AKR KeyGen ↗</a>
+            </div>
+          </div>
+          <div class="fips-grid">
+            <div class="fips-card">
+              <div class="fips-val">ML-KEM</div>
+              <div class="fips-label">FIPS 203<br/>Key Encapsulation</div>
+            </div>
+            <div class="fips-card">
+              <div class="fips-val">ML-DSA</div>
+              <div class="fips-label">FIPS 204<br/>Digital Signatures</div>
+            </div>
+            <div class="fips-card">
+              <div class="fips-val">SLH-DSA</div>
+              <div class="fips-label">FIPS 205<br/>Hash Signatures</div>
+            </div>
+            <div class="fips-card">
+              <div class="fips-val">ZKP</div>
+              <div class="fips-label">Zero Knowledge<br/>Proofs v2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TICKER -->
+    <div class="ticker">
+      <div class="ticker-track">
+        <div class="ticker-item"><span>ML-KEM-768</span> FIPS 203 KEY ENCAPSULATION</div>
+        <div class="ticker-item"><span>ML-DSA-65</span> FIPS 204 DIGITAL SIGNATURES</div>
+        <div class="ticker-item"><span>ARGON2ID</span> MEMORY-HARD KEY DERIVATION</div>
+        <div class="ticker-item"><span>OCSP</span> REAL-TIME CERT REVOCATION</div>
+        <div class="ticker-item"><span>ZKP v2</span> BOUNDS-BINDING RANGE PROOFS</div>
+        <div class="ticker-item"><span>THRESHOLD SIG</span> M-OF-N GOVERNANCE</div>
+        <div class="ticker-item"><span>HSM BRIDGE</span> HARDWARE KEY PROTECTION</div>
+        <div class="ticker-item"><span>SHAMIR</span> SECRET SHARING</div>
+        <div class="ticker-item"><span>ML-KEM-768</span> FIPS 203 KEY ENCAPSULATION</div>
+        <div class="ticker-item"><span>ML-DSA-65</span> FIPS 204 DIGITAL SIGNATURES</div>
+        <div class="ticker-item"><span>ARGON2ID</span> MEMORY-HARD KEY DERIVATION</div>
+        <div class="ticker-item"><span>OCSP</span> REAL-TIME CERT REVOCATION</div>
+        <div class="ticker-item"><span>ZKP v2</span> BOUNDS-BINDING RANGE PROOFS</div>
+        <div class="ticker-item"><span>THRESHOLD SIG</span> M-OF-N GOVERNANCE</div>
+        <div class="ticker-item"><span>HSM BRIDGE</span> HARDWARE KEY PROTECTION</div>
+        <div class="ticker-item"><span>SHAMIR</span> SECRET SHARING</div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <section id="products">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-number">01</div>
+          <div>
+            <div class="section-tag">SA'AT Cryptographics — Open Source</div>
+            <h2 class="section-title">The security stack</h2>
+            <p class="section-desc">Two open-source tools. From raw key generation to a complete six-phase cryptographic trust platform — hardened with seven production-grade security steps.</p>
+          </div>
+        </div>
+        <div class="product-list reveal">
+          <a href="https://github.com/PTHMeridian/AKR-KeyGen" target="_blank" class="product-item">
+            <div class="product-num">// 01</div>
+            <div>
+              <div class="product-name">AKR KeyGen</div>
+              <div class="product-fullname">ASYMMETRIC KEY RESOLVER — KEY GENERATION ENGINE</div>
+              <p class="product-desc">Post-quantum cryptographic primitive engine. Implements ML-KEM, ML-DSA and SLH-DSA — the three NIST post-quantum standards published in 2024. Includes hybrid classical/quantum modes for organizations transitioning gradually. REST API and live developer dashboard included.</p>
+              <div class="product-chips">
+                <span class="chip chip-accent">ML-KEM-768</span>
+                <span class="chip chip-accent">ML-DSA-65</span>
+                <span class="chip chip-accent">SLH-DSA</span>
+                <span class="chip">ECDSA P-256 / P-384</span>
+                <span class="chip">AES-256-GCM</span>
+                <span class="chip">Hybrid modes</span>
+                <span class="chip">REST API</span>
+                <span class="chip">TypeScript / Node.js</span>
+              </div>
+            </div>
+            <div class="product-arrow">↗</div>
+          </a>
+          <a href="https://github.com/PTHMeridian/AKR-NaOS" target="_blank" class="product-item">
+            <div class="product-num">// 02</div>
+            <div>
+              <div class="product-name">AKR Naos</div>
+              <div class="product-fullname">NESTED AUTHENTICATION OPERATIONS SUITE</div>
+              <p class="product-desc">A complete cryptographic trust platform in six phases — Shamir Secret Sharing, Argon2id Key Vault, Certificate Authority with real-time OCSP, Secure Channel, HMIT Audit Engine and Identity Wallet with Zero Knowledge Proofs. Seven hardening steps bring it to production grade. One vulnerability discovered and patched internally before release.</p>
+              <div class="product-chips">
+                <span class="chip chip-accent">Shamir Secret Sharing</span>
+                <span class="chip chip-accent">Argon2id KDF</span>
+                <span class="chip chip-accent">ZKP v2 — bounds binding</span>
+                <span class="chip">PKI / OCSP</span>
+                <span class="chip">HSM Bridge</span>
+                <span class="chip">Threshold Signatures</span>
+                <span class="chip">Key Attestation</span>
+                <span class="chip">Self-sovereign DID</span>
+              </div>
+            </div>
+            <div class="product-arrow">↗</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- THREAT MODEL -->
+    <section id="threats">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-number">02</div>
+          <div>
+            <div class="section-tag">Why post-quantum — now</div>
+            <h2 class="section-title">The threats are real</h2>
+            <p class="section-desc">These are not theoretical future risks. They are active threats that post-quantum cryptography defeats.</p>
+          </div>
+        </div>
+        <div class="threat-grid reveal">
+          <div class="threat-card">
+            <div class="threat-icon">Harvest Now Decrypt Later</div>
+            <div class="threat-name">HNDL Attack</div>
+            <p class="threat-desc">Adversaries are recording encrypted traffic today — government communications, financial data, health records — to decrypt when quantum computers arrive. Data encrypted today with classical algorithms is already compromised.</p>
+            <div class="threat-status defeated">✓ Defeated by ML-KEM</div>
+          </div>
+          <div class="threat-card">
+            <div class="threat-icon">Signature Forgery</div>
+            <div class="threat-name">Quantum Forgery</div>
+            <p class="threat-desc">Quantum computers running Shor's algorithm can forge digital signatures based on RSA and ECDSA — the algorithms protecting software updates, financial transactions and legal documents worldwide.</p>
+            <div class="threat-status defeated">✓ Defeated by ML-DSA</div>
+          </div>
+          <div class="threat-card">
+            <div class="threat-icon">Key Compromise</div>
+            <div class="threat-name">Vault Brute Force</div>
+            <p class="threat-desc">GPU-accelerated attacks against cryptographic key vaults using iterative hash functions. Modern GPU clusters can test billions of password combinations per second against weakly derived keys.</p>
+            <div class="threat-status defeated">✓ Defeated by Argon2id</div>
+          </div>
+          <div class="threat-card">
+            <div class="threat-icon">Identity Fraud</div>
+            <div class="threat-name">Proof Substitution</div>
+            <p class="threat-desc">Zero-knowledge proof systems with unbound range proofs allow attackers to substitute valid proofs for different claims — proving age eligibility with a proof generated for a different age range.</p>
+            <div class="threat-status defeated">✓ Defeated by ZKP v2</div>
+          </div>
+          <div class="threat-card">
+            <div class="threat-icon">Insider Threat</div>
+            <div class="threat-name">Single-Party Control</div>
+            <p class="threat-desc">Single administrators with unilateral key access represent catastrophic insider threat vectors. One compromised or malicious person can sign fraudulent certificates, issue unauthorized credentials or destroy audit records.</p>
+            <div class="threat-status defeated">✓ Defeated by Threshold Signatures</div>
+          </div>
+          <div class="threat-card">
+            <div class="threat-icon">Certificate Fraud</div>
+            <div class="threat-name">Revocation Delay</div>
+            <p class="threat-desc">Certificate Revocation Lists downloaded periodically leave windows of hours where revoked certificates appear valid. An attacker whose credentials are revoked at 9am can still authenticate at 9:02am against a cached CRL.</p>
+            <div class="threat-status defeated">✓ Defeated by OCSP — 0ms delay</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HARDENING STEPS -->
+    <section id="hardening">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-number">03</div>
+          <div>
+            <div class="section-tag">AKR Naos — production hardening</div>
+            <h2 class="section-title">Seven hardening steps</h2>
+            <p class="section-desc">AKR Naos was not just built — it was hardened. Seven specific steps bring it from functional prototype to production-grade security infrastructure.</p>
+          </div>
+        </div>
+        <div class="hardening-list reveal">
+          <div class="hardening-item">
+            <div class="hardening-step">// 01</div>
+            <div>
+              <div class="hardening-name">Argon2id KDF</div>
+              <div class="hardening-desc">Memory-hard key derivation — 64MB RAM per attempt (INTERACTIVE) / 1GB RAM (SENSITIVE) — GPU brute force economically infeasible</div>
+            </div>
+            <div class="hardening-badge badge-done">Complete</div>
+          </div>
+          <div class="hardening-item">
+            <div class="hardening-step">// 02</div>
+            <div>
+              <div class="hardening-name">OCSP Responder</div>
+              <div class="hardening-desc">Real-time certificate revocation — 0ms revocation window vs hours with CRL — 3,600,000x faster revocation detection</div>
+            </div>
+            <div class="hardening-badge badge-done">Complete</div>
+          </div>
+          <div class="hardening-item">
+            <div class="hardening-step">// 03</div>
+            <div>
+              <div class="hardening-name">Security Audit</div>
+              <div class="hardening-desc">Independent third-party cryptographic review — seeking Canadian university research collaboration — CrySP lab, University of Waterloo</div>
+            </div>
+            <div class="hardening-badge badge-pending">Seeking</div>
+          </div>
+          <div class="hardening-item">
+            <div class="hardening-step">// 04</div>
+            <div>
+              <div class="hardening-name">HSM Bridge</div>
+              <div class="hardening-desc">Hardware Security Module abstraction — keys never leave hardware boundary — SoftHSM provider now, YubiHSM / AWS CloudHSM ready</div>
+            </div>
+            <div class="hardening-badge badge-done">Complete</div>
+          </div>
+          <div class="hardening-item">
+            <div class="hardening-step">// 05</div>
+            <div>
+              <div class="hardening-name">Threshold Signatures</div>
+              <div class="hardening-desc">M-of-N governance — 3-of-5 leadership group, 2-of-3 crypto team — no single party can act alone on high-value operations</div>
+            </div>
+            <div class="hardening-badge badge-done">Complete</div>
+          </div>
+          <div class="hardening-item">
+            <div class="hardening-step">// 06</div>
+            <div>
+              <div class="hardening-name">Key Attestation</div>
+              <div class="hardening-desc">Cryptographic proof of hardware provenance — device certificate chain, policy enforcement — trust proven not asserted</div>
+            </div>
+            <div class="hardening-badge badge-done">Complete</div>
+          </div>
+          <div class="hardening-item">
+            <div class="hardening-step">// 07</div>
+            <div>
+              <div class="hardening-name">ZKP v2</div>
+              <div class="hardening-desc">CVE-AKR-NAOS-2026-001 patched — bounds substitution attack closed — boundsCommitment binding in Fiat-Shamir challenge — self-discovered</div>
+            </div>
+            <div class="hardening-badge badge-done">Complete</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY QUANTUM -->
+    <section id="why">
+      <div class="container">
+        <div class="why-grid">
+          <div class="reveal">
+            <div class="section-tag">The timeline</div>
+            <div class="why-statement">The clock is <span class="hl">already running.</span></div>
+            <p class="why-body">NIST published the post-quantum cryptographic standards in 2024. The US government has mandated migration for all federal agencies by 2030. Canada's Communications Security Establishment is actively working on transition requirements.</p>
+            <p class="why-body">Most organizations are not ready. The average enterprise migration takes three to five years. Organizations that start in 2027 will not finish by 2030. The window is now.</p>
+            <p class="why-body">PTH Meridian has already implemented the standards. The code is open source. The audit trail is public. The work is done.</p>
+          </div>
+          <div class="reveal">
+            <div class="section-tag">Key dates</div>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-year">2016</div>
+                <div class="timeline-event"><strong>NIST PQC Competition</strong>Started evaluation of post-quantum algorithms — 69 submissions worldwide</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-year">2022</div>
+                <div class="timeline-event"><strong>Finalists Selected</strong>ML-KEM, ML-DSA and SLH-DSA announced as standards</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-year">2024</div>
+                <div class="timeline-event"><strong>FIPS 203/204/205 Published</strong>Official standards released — migration mandate begins</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-year">2026</div>
+                <div class="timeline-event"><strong>PTH Meridian</strong>AKR KeyGen and AKR Naos — full implementation — open source — Canadian built</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-year">2030</div>
+                <div class="timeline-event"><strong>US Federal Mandate</strong>All agencies must complete migration — organizations starting now will barely make it</div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-year">2035+</div>
+                <div class="timeline-event"><strong>Cryptographically Relevant Quantum</strong>Current estimates for quantum computers capable of breaking RSA-2048</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT STRIP -->
+    <section id="contact-strip">
+      <div class="container">
+        <div class="contact-strip-inner reveal">
+          <div class="contact-strip-text">
+            <div class="contact-strip-title">Ready to secure your infrastructure?</div>
+            <p class="contact-strip-desc">AKR KeyGen and AKR Naos are open source and free to use. For integration support, custom deployment or security consultation — get in touch.</p>
+          </div>
+          <div class="contact-strip-actions">
+            <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Get in touch →</a>
+            <a href="https://github.com/PTHMeridian" target="_blank" class="btn-ghost">GitHub ↗</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-logo">PTH Meridian</div>
+        <div class="footer-copy">© 2026 Adel Tammam · Calgary, Alberta, Canada</div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="health.html">Health</a></li>
+        <li><a href="energy.html">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+      </ul>
+      <div class="footer-credo">Ask. Solve. Done.</div>
+    </div>
+  </footer>
+
+  <script>
+    // Quantum field
+    const canvas = document.getElementById('quantum-field');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles, mouse = { x: -1000, y: -1000 };
+    const PARTICLE_COUNT = 70, MAX_DIST = 160, PARTICLE_SPEED = 0.25;
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    function createParticle() {
+      return { x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-0.5)*PARTICLE_SPEED, vy: (Math.random()-0.5)*PARTICLE_SPEED, r: Math.random()*1.5+0.5, hex: Math.floor(Math.random()*0xFFFF).toString(16).padStart(4,'0').toUpperCase(), hexTimer: 0, hexInterval: Math.random()*200+100 };
+    }
+    function init() { resize(); particles = Array.from({length: PARTICLE_COUNT}, createParticle); }
+    function draw() {
+      ctx.clearRect(0,0,W,H);
+      for (let i=0; i<particles.length; i++) {
+        const p = particles[i];
+        const dx = mouse.x-p.x, dy = mouse.y-p.y, md = Math.sqrt(dx*dx+dy*dy);
+        if (md<200) { p.vx += (dx/md)*0.008; p.vy += (dy/md)*0.008; }
+        const spd = Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+        if (spd>0.8) { p.vx*=0.98; p.vy*=0.98; }
+        p.x+=p.vx; p.y+=p.vy;
+        if (p.x<0) p.x=W; if (p.x>W) p.x=0; if (p.y<0) p.y=H; if (p.y>H) p.y=0;
+        p.hexTimer++; if (p.hexTimer>p.hexInterval) { p.hex=Math.floor(Math.random()*0xFFFF).toString(16).padStart(4,'0').toUpperCase(); p.hexTimer=0; }
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle='rgba(0,229,255,0.35)'; ctx.fill();
+        if (i%4===0) { ctx.font='9px IBM Plex Mono,monospace'; ctx.fillStyle='rgba(0,229,255,0.12)'; ctx.fillText('0x'+p.hex,p.x+6,p.y+3); }
+        for (let j=i+1; j<particles.length; j++) {
+          const q=particles[j], ddx=p.x-q.x, ddy=p.y-q.y, dist=Math.sqrt(ddx*ddx+ddy*ddy);
+          if (dist<MAX_DIST) { const alpha=(1-dist/MAX_DIST)*0.15; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.strokeStyle=`rgba(0,229,255,${alpha})`; ctx.lineWidth=0.5; ctx.stroke(); }
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', e => { mouse.x=e.clientX; mouse.y=e.clientY; });
+    init(); draw();
+
+    // Nav scroll
+    window.addEventListener('scroll', () => {
+      document.querySelector('nav').style.borderBottomColor = window.scrollY>40 ? 'rgba(26,45,80,0.8)' : 'var(--border)';
+    });
+
+    // Reveal
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((e,i) => { if (e.isIntersecting) { setTimeout(()=>e.target.classList.add('visible'), i*100); observer.unobserve(e.target); } });
+    }, {threshold: 0.08});
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>

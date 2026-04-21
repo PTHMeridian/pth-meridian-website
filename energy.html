@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PTH Meridian Energy — Computational energy optimization, microgrid design, national transition modeling. Kardashev 1.0 infrastructure." />
+  <title>Energy — PTH Meridian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void:        #0D0800;
+      --deep:        #140C00;
+      --surface:     #1C1100;
+      --raised:      #241700;
+      --border:      #3D2800;
+      --border-hi:   #5A3C00;
+      --accent:      #FFB300;
+      --accent-dim:  #7A5500;
+      --accent-glow: rgba(255,179,0,0.1);
+      --accent2:     #FF8C00;
+      --accent3:     #FFD700;
+      --text:        #F0DBA0;
+      --text-muted:  #7A6030;
+      --text-dim:    #3D2E10;
+      --font-display:'Barlow Condensed', sans-serif;
+      --font-body:   'IBM Plex Sans', sans-serif;
+      --font-mono:   'IBM Plex Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--void); color: var(--text); font-family: var(--font-body); font-weight: 300; font-size: 16px; line-height: 1.7; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    ::selection { background: var(--accent); color: var(--void); }
+    #energy-field { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+    nav, main, footer { position: relative; z-index: 2; }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(13,8,0,0.88); backdrop-filter: blur(20px); }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { display: flex; align-items: center; gap: 1rem; text-decoration: none; }
+    .nav-logo-mark { width: 32px; height: 32px; border: 1px solid var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); box-shadow: 0 0 12px var(--accent-glow), inset 0 0 12px var(--accent-glow); animation: pulse-border 3s ease-in-out infinite; }
+    @keyframes pulse-border { 0%, 100% { box-shadow: 0 0 8px var(--accent-glow), inset 0 0 8px var(--accent-glow); } 50% { box-shadow: 0 0 20px rgba(255,179,0,0.2), inset 0 0 20px rgba(255,179,0,0.08); } }
+    .nav-logo-text { display: flex; flex-direction: column; gap: 1px; }
+    .nav-logo-name { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; }
+    .nav-logo-sub { font-family: var(--font-mono); font-size: 0.55rem; color: var(--accent-dim); letter-spacing: 0.16em; text-transform: uppercase; }
+    .nav-status { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent2); letter-spacing: 0.1em; }
+    .nav-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+    .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+    .nav-links a { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .nav-cta { border: 1px solid var(--accent-dim) !important; padding: 0.35rem 1rem; color: var(--accent) !important; transition: all 0.2s !important; }
+    .nav-cta:hover { background: var(--accent) !important; color: var(--void) !important; }
+
+    /* HERO */
+    #hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 0 6rem; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; width: 100%; }
+    .hero-pre { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; opacity: 0; animation: slideIn 0.6s ease forwards 0.3s; }
+    .hero-pre-line { width: 40px; height: 1px; background: var(--accent); }
+    .hero-pre-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(3.5rem, 10vw, 9rem); font-weight: 800; line-height: 0.96; letter-spacing: 0.01em; text-transform: uppercase; margin-bottom: 2.5rem; opacity: 0; animation: slideIn 0.7s ease forwards 0.5s; }
+    .hero-title-main { display: block; color: var(--text); }
+    .hero-title-accent { display: block; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; opacity: 0; animation: slideIn 0.7s ease forwards 0.8s; }
+    .hero-desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 2.5rem; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.6rem; background: var(--accent); color: var(--void); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; padding: 0.9rem 2rem; text-decoration: none; transition: all 0.2s; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+    .btn-primary:hover { background: #fff; box-shadow: 0 0 30px rgba(255,179,0,0.4); transform: translateY(-2px); }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; padding: 0.9rem 1.5rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.2s; }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border-hi); }
+
+    /* KARDASHEV METER */
+    .kardashev-box { border: 1px solid var(--border); background: var(--deep); padding: 2rem; }
+    .kardashev-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .kardashev-scale { display: flex; flex-direction: column; gap: 1rem; }
+    .kardashev-level { display: flex; align-items: center; gap: 1rem; }
+    .kard-val { font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; color: var(--accent); min-width: 60px; letter-spacing: 0.02em; }
+    .kard-bar-wrap { flex: 1; height: 4px; background: var(--border); position: relative; }
+    .kard-bar { height: 100%; background: linear-gradient(to right, var(--accent), var(--accent2)); transition: width 2s ease; }
+    .kard-desc { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.06em; min-width: 120px; text-align: right; }
+    .kard-current .kard-val { color: var(--accent3); }
+    .kard-current .kard-bar { background: linear-gradient(to right, var(--accent3), var(--accent)); }
+    .kard-current .kard-desc { color: var(--accent2); }
+
+    /* SECTIONS */
+    section { padding: 7rem 0; }
+    .section-header { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start; margin-bottom: 4rem; }
+    .section-number { font-family: var(--font-display); font-size: 4rem; font-weight: 800; color: var(--text-dim); line-height: 1; letter-spacing: -0.04em; }
+    .section-tag { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .section-title { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 700; color: var(--text); line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-desc { font-size: 0.95rem; color: var(--text-muted); max-width: 520px; line-height: 1.8; }
+
+    /* FOCUS AREAS */
+    #focus { background: var(--deep); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .focus-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .focus-card { background: var(--surface); padding: 2.5rem; transition: background 0.2s; }
+    .focus-card:hover { background: var(--raised); }
+    .focus-tag { font-family: var(--font-mono); font-size: 0.62rem; color: var(--accent-dim); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .focus-tag::before { content: '//'; color: var(--text-dim); }
+    .focus-name { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.75rem; }
+    .focus-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.75; margin-bottom: 1.5rem; }
+    .focus-items { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .focus-items li { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.75rem; letter-spacing: 0.04em; }
+    .focus-items li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+    .focus-priority { font-family: var(--font-mono); font-size: 0.6rem; color: var(--accent); border: 1px solid var(--accent-dim); padding: 0.2rem 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; display: inline-block; }
+
+    /* VISION */
+    .vision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
+    .vision-statement { font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700; line-height: 1.2; color: var(--text); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 2rem; }
+    .vision-statement .hl { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .vision-body { font-size: 0.95rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 1.5rem; }
+    .roadmap { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .roadmap-item { background: var(--surface); padding: 1.5rem; display: grid; grid-template-columns: 100px 1fr; gap: 1rem; align-items: start; transition: background 0.2s; }
+    .roadmap-item:hover { background: var(--raised); }
+    .roadmap-phase { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+    .roadmap-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+    .roadmap-desc { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* CANADIAN ANGLE */
+    #canada { background: var(--deep); border-top: 1px solid var(--border); }
+    .canada-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; }
+    .canada-statement { font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 700; line-height: 1.2; color: var(--text); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 1.5rem; }
+    .canada-body { font-size: 0.92rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 1.25rem; }
+    .canada-facts { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .fact-item { background: var(--surface); padding: 1.25rem 1.5rem; display: grid; grid-template-columns: 90px 1fr; gap: 1rem; align-items: center; transition: background 0.2s; }
+    .fact-item:hover { background: var(--raised); }
+    .fact-num { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--accent); letter-spacing: 0.02em; }
+    .fact-desc { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.04em; line-height: 1.5; }
+    .fact-desc strong { color: var(--text); display: block; text-transform: uppercase; margin-bottom: 0.15rem; }
+
+    /* CONTACT */
+    #contact-strip { border-top: 1px solid var(--border); padding: 5rem 0; }
+    .contact-strip-inner { display: flex; align-items: center; justify-content: space-between; gap: 3rem; flex-wrap: wrap; }
+    .contact-strip-title { font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 0.5rem; }
+    .contact-strip-desc { font-size: 0.9rem; color: var(--text-muted); max-width: 480px; }
+    .contact-strip-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    footer { background: var(--void); border-top: 1px solid var(--border); padding: 2.5rem 0; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+    .footer-left { display: flex; align-items: center; gap: 2rem; }
+    .footer-logo { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+    .footer-copy { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.06em; }
+    .footer-links { display: flex; gap: 2rem; list-style: none; }
+    .footer-links a { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); text-decoration: none; letter-spacing: 0.08em; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--accent); }
+    .footer-credo { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; color: #FFB300; letter-spacing: 0.08em; opacity: 0.6; }
+
+    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 860px) {
+      .hero-body, .vision-grid, .canada-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .focus-grid { grid-template-columns: 1fr; }
+      .section-header { grid-template-columns: 1fr; gap: 1rem; }
+      .section-number { font-size: 3rem; }
+      .nav-links { display: none; }
+      .contact-strip-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="energy-field"></canvas>
+
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <div class="nav-logo-mark">PTH</div>
+        <div class="nav-logo-text">
+          <div class="nav-logo-name">PTH Meridian</div>
+          <div class="nav-logo-sub">Energy Division · Calgary, CA</div>
+        </div>
+      </a>
+      <div class="nav-status">
+        <div class="nav-status-dot"></div>
+        KARDASHEV 1.0 — PLANETARY ENERGY MISSION
+      </div>
+      <ul class="nav-links">
+        <li><a href="security.html">Security</a></li>
+        <li><a href="health.html">Health</a></li>
+        <li><a href="energy.html" class="active">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+        <li><a href="index.html#contact" class="nav-cta">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <section id="hero">
+      <div class="container">
+        <div class="hero-pre">
+          <div class="hero-pre-line"></div>
+          <div class="hero-pre-text">PTH Meridian — Energy Division</div>
+        </div>
+        <h1 class="hero-title">
+          <span class="hero-title-main">Planetary</span>
+          <span class="hero-title-accent">energy.</span>
+        </h1>
+        <div class="hero-body">
+          <div>
+            <p class="hero-desc">Energy is the master variable. Every measure of human development — clean water, food security, healthcare, education, economic activity — is downstream of reliable energy access. PTH Meridian builds the computational tools to optimize energy systems from a single remote community to a national grid to a planetary network.</p>
+            <div class="hero-actions">
+              <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Collaborate →</a>
+              <a href="index.html" class="btn-ghost">PTH Meridian ↗</a>
+            </div>
+          </div>
+          <div class="kardashev-box">
+            <div class="kardashev-label">// Kardashev Scale — Civilization Energy Use</div>
+            <div class="kardashev-scale">
+              <div class="kardashev-level kard-current">
+                <div class="kard-val">0.73</div>
+                <div class="kard-bar-wrap"><div class="kard-bar" style="width:73%"></div></div>
+                <div class="kard-desc">We are here</div>
+              </div>
+              <div class="kardashev-level">
+                <div class="kard-val">1.0</div>
+                <div class="kard-bar-wrap"><div class="kard-bar" style="width:100%"></div></div>
+                <div class="kard-desc">Planetary energy</div>
+              </div>
+              <div class="kardashev-level">
+                <div class="kard-val">2.0</div>
+                <div class="kard-bar-wrap"><div class="kard-bar" style="width:100%; opacity:0.3"></div></div>
+                <div class="kard-desc">Stellar energy</div>
+              </div>
+            </div>
+            <div style="margin-top:1.5rem; font-family:var(--font-mono); font-size:0.62rem; color:var(--text-muted); line-height:1.6;">
+              The gap between 0.73 and 1.0 is not a technology gap. It is a coordination and optimization gap. We have enough energy on Earth. We lack the systems to collect, distribute and use it efficiently at scale. That is a computation problem.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOCUS AREAS -->
+    <section id="focus">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-number">01</div>
+          <div>
+            <div class="section-tag">Computational energy tools</div>
+            <h2 class="section-title">Where we work</h2>
+            <p class="section-desc">Four focus areas — from the most immediate human need to the planetary scale mission. Each builds on the last.</p>
+          </div>
+        </div>
+        <div class="focus-grid reveal">
+          <div class="focus-card">
+            <div class="focus-priority">Priority — Canada first</div>
+            <div class="focus-tag">Remote Communities</div>
+            <div class="focus-name">Microgrid Optimization</div>
+            <p class="focus-desc">700 million people worldwide have no electricity. In Canada, approximately 35 First Nations communities in Northern Ontario rely entirely on diesel generators — paying 4-10x urban electricity rates for unreliable power. The computational tools to design, deploy and operate clean energy microgrids for these communities are what we build first.</p>
+            <ul class="focus-items">
+              <li>Microgrid sizing and solar-storage optimization</li>
+              <li>Real-time supply-demand balancing</li>
+              <li>Predictive maintenance — failure before it happens</li>
+              <li>Community-to-community interconnection planning</li>
+              <li>Economic modeling — diesel displacement ROI</li>
+            </ul>
+          </div>
+          <div class="focus-card">
+            <div class="focus-tag">National Modeling</div>
+            <div class="focus-name">Transition Planning</div>
+            <p class="focus-desc">Every country has a unique energy profile — different renewable resources, existing infrastructure, demand patterns, economic constraints and political realities. The transition to clean energy cannot be solved the same way for Canada as for Nigeria or Bangladesh. Computational models that optimize each country's pathway individually — then find the global interconnections that make every plan more efficient.</p>
+            <ul class="focus-items">
+              <li>Geographic renewable resource assessment</li>
+              <li>Demand modeling as income rises</li>
+              <li>Technology cost curve integration</li>
+              <li>Grid physics and network flow</li>
+              <li>Climate resilience scenario modeling</li>
+            </ul>
+          </div>
+          <div class="focus-card">
+            <div class="focus-tag">Data Infrastructure</div>
+            <div class="focus-name">Waste Heat Recovery</div>
+            <p class="focus-desc">Data centers generate enormous heat as waste. In Finland and Sweden, data center waste heat already warms hundreds of thousands of homes through district heating networks. In Canada — particularly for remote and northern communities — integrating data center waste heat into community heating systems turns an industrial cost into a community asset. Computational design of these integrated systems is largely absent.</p>
+            <ul class="focus-items">
+              <li>Data center siting optimization — water, energy, climate</li>
+              <li>District heating network integration modeling</li>
+              <li>Community heating demand forecasting</li>
+              <li>Canadian data sovereignty — domestic infrastructure</li>
+              <li>30-year climate resilience assessment</li>
+            </ul>
+          </div>
+          <div class="focus-card">
+            <div class="focus-tag">Kardashev 1.0</div>
+            <div class="focus-name">Planetary Optimization</div>
+            <p class="focus-desc">The long-term mission: a computational operating system for the world's energy system. Real-time optimization across national grids and regional interconnections. Cryptographically secured energy trading between nations — built on AKR Naos infrastructure. Equitable distribution modeling that ensures the transition benefits everyone, not just wealthy countries. Type 1 civilization infrastructure.</p>
+            <ul class="focus-items">
+              <li>Multi-country grid interconnection modeling</li>
+              <li>Cryptographic energy trading settlement — AKR Naos</li>
+              <li>Verifiable renewable energy certificates</li>
+              <li>Equity constraints — global distribution modeling</li>
+              <li>Water-energy-food nexus optimization</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISION -->
+    <section id="vision">
+      <div class="container">
+        <div class="vision-grid">
+          <div class="reveal">
+            <div class="section-tag">// The mission</div>
+            <div class="vision-statement">Energy is the <span class="hl">master variable.</span></div>
+            <p class="vision-body">Raise a community's reliable energy access and you raise everything else simultaneously. Clean water requires energy to pump and treat. Food security requires energy to grow, store and transport. Healthcare requires energy to power facilities. Economic activity requires energy for every unit of production.</p>
+            <p class="vision-body">The gap between a Type 0.73 and Type 1.0 civilization is not a resource gap. Earth receives 173 petawatts of solar energy — ten thousand times current human energy consumption. The gap is computational. Coordination. Optimization. Distribution.</p>
+            <p class="vision-body">PTH Meridian builds the tools to close that gap — starting in Northern Ontario, scaling to Canada, then to the world.</p>
+          </div>
+          <div class="reveal">
+            <div class="section-tag">// Roadmap</div>
+            <div class="roadmap">
+              <div class="roadmap-item">
+                <div class="roadmap-phase">Now</div>
+                <div>
+                  <div class="roadmap-title">Foundation</div>
+                  <div class="roadmap-desc">Cryptographic infrastructure — AKR Naos — provides the security layer for energy trading and settlement. Energy modeling research begins.</div>
+                </div>
+              </div>
+              <div class="roadmap-item">
+                <div class="roadmap-phase">Year 1-2</div>
+                <div>
+                  <div class="roadmap-title">Microgrid Tools</div>
+                  <div class="roadmap-desc">Open source microgrid optimization for Northern Ontario First Nations communities. First deployment. Health impact measurement.</div>
+                </div>
+              </div>
+              <div class="roadmap-item">
+                <div class="roadmap-phase">Year 2-4</div>
+                <div>
+                  <div class="roadmap-title">National Modeling</div>
+                  <div class="roadmap-desc">Canadian energy transition modeling. Interprovincial grid optimization. East-west energy corridor analysis. First international deployments.</div>
+                </div>
+              </div>
+              <div class="roadmap-item">
+                <div class="roadmap-phase">Year 4-7</div>
+                <div>
+                  <div class="roadmap-title">Regional Integration</div>
+                  <div class="roadmap-desc">Multi-country grid optimization. Cryptographic energy trading infrastructure. AKR Naos as settlement layer for international energy markets.</div>
+                </div>
+              </div>
+              <div class="roadmap-item">
+                <div class="roadmap-phase">Year 7+</div>
+                <div>
+                  <div class="roadmap-title">Planetary Scale</div>
+                  <div class="roadmap-desc">Real-time global energy system optimization. Type 1 civilization infrastructure. Kardashev 1.0 — made in Canada.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CANADIAN ANGLE -->
+    <section id="canada">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-number">03</div>
+          <div>
+            <div class="section-tag">Canada first — world second</div>
+            <h2 class="section-title">The Canadian energy opportunity</h2>
+            <p class="section-desc">Canada holds extraordinary energy resources and extraordinary energy challenges simultaneously. Solving the Canadian problem first creates tools that work everywhere.</p>
+          </div>
+        </div>
+        <div class="canada-grid reveal">
+          <div>
+            <div class="canada-statement">The paradox of Canadian energy abundance</div>
+            <p class="canada-body">Canada holds 20% of the world's fresh water and some of the most significant renewable energy resources on Earth — hydro, wind, solar, geothermal — yet 35 First Nations communities in Northern Ontario pay up to $1.50 per kilowatt-hour for diesel electricity while rivers flow past them. Alberta builds data centers that stress already-scarce southern water while Quebec has abundant hydro and cold-climate free cooling. The east-west energy corridor that would connect Quebec's surplus to Alberta's demand does not exist.</p>
+            <p class="canada-body">These are not resource problems. They are coordination, modeling and political will problems. Computational tools that make the true cost of dysfunction visible — and the benefit of coordination concrete — are the first step toward solutions.</p>
+          </div>
+          <div class="canada-facts">
+            <div class="fact-item">
+              <div class="fact-num">35</div>
+              <div class="fact-desc"><strong>Isolated First Nations Communities</strong>Northern Ontario — diesel dependent — no road access — paying 4-10x urban electricity rates</div>
+            </div>
+            <div class="fact-item">
+              <div class="fact-num">$1.50</div>
+              <div class="fact-desc"><strong>Per kWh — Diesel Communities</strong>vs $0.12 urban average — the cost of isolation and the absence of clean energy infrastructure</div>
+            </div>
+            <div class="fact-item">
+              <div class="fact-num">20%</div>
+              <div class="fact-desc"><strong>World's Fresh Water</strong>Canada holds it — yet water stress in southern Alberta is real and worsening with glacier retreat</div>
+            </div>
+            <div class="fact-item">
+              <div class="fact-num">70%</div>
+              <div class="fact-desc"><strong>Rocky Mountain Glacier Volume Lost</strong>Since 1900 — Alberta's water battery disappearing — data center proposals ignore this trajectory</div>
+            </div>
+            <div class="fact-item">
+              <div class="fact-num">0</div>
+              <div class="fact-desc"><strong>East-West Energy Corridors</strong>Canada exports energy south to the US and imports refined products back — interprovincial dysfunction at scale</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact-strip">
+      <div class="container">
+        <div class="contact-strip-inner reveal">
+          <div>
+            <div class="contact-strip-title">Building the energy future</div>
+            <p class="contact-strip-desc">The energy division is in early research and development. We welcome collaboration from energy researchers, Indigenous community organizations, provincial energy ministries and international development partners.</p>
+          </div>
+          <div class="contact-strip-actions">
+            <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Get in touch →</a>
+            <a href="index.html" class="btn-ghost">PTH Meridian ↗</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-logo">PTH Meridian</div>
+        <div class="footer-copy">© 2026 Adel Tammam · Calgary, Alberta, Canada</div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="health.html">Health</a></li>
+        <li><a href="energy.html">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+      </ul>
+      <div class="footer-credo">Ask. Solve. Done.</div>
+    </div>
+  </footer>
+
+  <script>
+    // Energy flow animation — flowing lines suggesting current and transmission
+    const canvas = document.getElementById('energy-field');
+    const ctx = canvas.getContext('2d');
+    let W, H, streams;
+    const STREAM_COUNT = 12;
+
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+
+    function createStream() {
+      return {
+        x: Math.random() * W,
+        y: Math.random() * H,
+        angle: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.8 + 0.3,
+        length: Math.random() * 120 + 60,
+        opacity: Math.random() * 0.12 + 0.04,
+        width: Math.random() * 1.5 + 0.5,
+        phase: Math.random() * Math.PI * 2,
+      };
+    }
+
+    function init() { resize(); streams = Array.from({ length: STREAM_COUNT }, createStream); }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const t = Date.now() * 0.001;
+
+      streams.forEach(s => {
+        s.x += Math.cos(s.angle) * s.speed;
+        s.y += Math.sin(s.angle) * s.speed;
+        s.angle += Math.sin(t * 0.3 + s.phase) * 0.008;
+
+        if (s.x < -s.length || s.x > W + s.length || s.y < -s.length || s.y > H + s.length) {
+          s.x = Math.random() * W;
+          s.y = Math.random() * H;
+        }
+
+        const opacity = s.opacity * (0.7 + Math.sin(t * 2 + s.phase) * 0.3);
+        const grad = ctx.createLinearGradient(
+          s.x - Math.cos(s.angle) * s.length,
+          s.y - Math.sin(s.angle) * s.length,
+          s.x, s.y
+        );
+        grad.addColorStop(0, `rgba(255,179,0,0)`);
+        grad.addColorStop(0.5, `rgba(255,179,0,${opacity})`);
+        grad.addColorStop(1, `rgba(255,140,0,${opacity * 0.6})`);
+
+        ctx.beginPath();
+        ctx.moveTo(s.x - Math.cos(s.angle) * s.length, s.y - Math.sin(s.angle) * s.length);
+        ctx.lineTo(s.x, s.y);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = s.width;
+        ctx.stroke();
+
+        // Node at head
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.width * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,179,0,${opacity * 1.5})`;
+        ctx.fill();
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    init(); draw();
+
+    // Animate Kardashev bars on load
+    setTimeout(() => {
+      document.querySelectorAll('.kard-bar').forEach(bar => {
+        const w = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => { bar.style.width = w; }, 100);
+      });
+    }, 800);
+
+    window.addEventListener('scroll', () => {
+      document.querySelector('nav').style.borderBottomColor = window.scrollY > 40 ? 'rgba(61,40,0,0.8)' : 'var(--border)';
+    });
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('visible'), i * 100); observer.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>

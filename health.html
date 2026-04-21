@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PTH Meridian Health — Bioinformatics, disease causation mapping, molecular analysis. HqA and MNTU." />
+  <title>Health — PTH Meridian</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void:       #030D08;
+      --deep:       #061410;
+      --surface:    #0A1E16;
+      --raised:     #0F2A1E;
+      --border:     #163D28;
+      --border-hi:  #1F5438;
+      --accent:     #00FF88;
+      --accent-dim: #007A40;
+      --accent-glow:rgba(0,255,136,0.1);
+      --accent2:    #00E5A0;
+      --accent3:    #39FF14;
+      --text:       #C8E8D4;
+      --text-muted: #3D7A58;
+      --text-dim:   #1A3D28;
+      --font-display:'Barlow Condensed', sans-serif;
+      --font-body:  'IBM Plex Sans', sans-serif;
+      --font-mono:  'IBM Plex Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--void);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--accent); color: var(--void); }
+
+    /* CELL CANVAS */
+    #cell-field {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    nav, main, footer { position: relative; z-index: 2; }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      background: rgba(3,13,8,0.88);
+      backdrop-filter: blur(20px);
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 1rem; text-decoration: none; }
+    .nav-logo-mark {
+      width: 32px; height: 32px;
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow), inset 0 0 12px var(--accent-glow);
+      animation: pulse-border 3s ease-in-out infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 8px var(--accent-glow), inset 0 0 8px var(--accent-glow); }
+      50% { box-shadow: 0 0 20px rgba(0,255,136,0.2), inset 0 0 20px rgba(0,255,136,0.08); }
+    }
+    .nav-logo-text { display: flex; flex-direction: column; gap: 1px; }
+    .nav-logo-name { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; }
+    .nav-logo-sub { font-family: var(--font-mono); font-size: 0.55rem; color: var(--accent-dim); letter-spacing: 0.16em; text-transform: uppercase; }
+    .nav-status { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent2); letter-spacing: 0.1em; }
+    .nav-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+    .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+    .nav-links a { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .nav-cta { border: 1px solid var(--accent-dim) !important; padding: 0.35rem 1rem; color: var(--accent) !important; transition: all 0.2s !important; }
+    .nav-cta:hover { background: var(--accent) !important; color: var(--void) !important; }
+
+    /* HERO */
+    #hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 0 6rem; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; width: 100%; }
+    .hero-pre { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; opacity: 0; animation: slideIn 0.6s ease forwards 0.3s; }
+    .hero-pre-line { width: 40px; height: 1px; background: var(--accent); }
+    .hero-pre-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(3.5rem, 10vw, 9rem); font-weight: 800; line-height: 0.96; letter-spacing: 0.01em; text-transform: uppercase; margin-bottom: 2.5rem; opacity: 0; animation: slideIn 0.7s ease forwards 0.5s; }
+    .hero-title-main { display: block; color: var(--text); }
+    .hero-title-accent { display: block; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; opacity: 0; animation: slideIn 0.7s ease forwards 0.8s; }
+    .hero-desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 2.5rem; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.6rem; background: var(--accent); color: var(--void); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; padding: 0.9rem 2rem; text-decoration: none; transition: all 0.2s; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+    .btn-primary:hover { background: #fff; box-shadow: 0 0 30px rgba(0,255,136,0.4); transform: translateY(-2px); }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; padding: 0.9rem 1.5rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.2s; }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border-hi); }
+
+    /* STAT CARDS */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .stat-card { background: var(--deep); padding: 1.5rem; transition: background 0.2s; }
+    .stat-card:hover { background: var(--surface); }
+    .stat-val { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 0.35rem; letter-spacing: 0.02em; text-transform: uppercase; }
+    .stat-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.4; }
+
+    /* SECTIONS */
+    section { padding: 7rem 0; }
+    .section-header { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start; margin-bottom: 4rem; }
+    .section-number { font-family: var(--font-display); font-size: 4rem; font-weight: 800; color: var(--text-dim); line-height: 1; letter-spacing: -0.04em; }
+    .section-tag { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .section-title { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 700; color: var(--text); line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-desc { font-size: 0.95rem; color: var(--text-muted); max-width: 520px; line-height: 1.8; }
+
+    /* PRODUCT LIST */
+    #products { background: var(--deep); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .product-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .product-item { background: var(--void); padding: 2.5rem 3rem; display: grid; grid-template-columns: 60px 1fr auto; gap: 2rem; align-items: start; transition: background 0.2s; text-decoration: none; color: inherit; }
+    .product-item:hover { background: var(--surface); }
+    .product-item:hover .product-arrow { transform: translate(4px, -4px); color: var(--accent); }
+    .product-num { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.1em; padding-top: 0.35rem; }
+    .product-name { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; color: var(--text); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; margin-bottom: 0.25rem; }
+    .product-fullname { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent-dim); letter-spacing: 0.06em; margin-bottom: 1rem; }
+    .product-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.75; max-width: 600px; margin-bottom: 1.5rem; }
+    .product-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .chip { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); background: var(--raised); border: 1px solid var(--border); padding: 0.25rem 0.65rem; letter-spacing: 0.06em; }
+    .chip-accent { color: var(--accent); border-color: var(--accent-dim); }
+    .product-arrow { font-size: 1.25rem; color: var(--border-hi); transition: all 0.2s; padding-top: 0.25rem; }
+    .product-coming { opacity: 0.45; cursor: default; }
+    .product-coming:hover { background: var(--void); }
+    .product-coming:hover .product-arrow { transform: none; color: var(--border-hi); }
+    .coming-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.6rem; color: #FFB300; border: 1px solid #7A5500; padding: 0.2rem 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; }
+
+    /* PROBLEM AREAS */
+    .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 3rem; }
+    .problem-card { background: var(--surface); padding: 2rem; transition: background 0.2s; }
+    .problem-card:hover { background: var(--raised); }
+    .problem-icon { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1rem; }
+    .problem-name { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem; }
+    .problem-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1rem; }
+    .problem-stat { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent2); letter-spacing: 0.06em; }
+
+    /* APPROACH */
+    #approach { background: var(--deep); border-top: 1px solid var(--border); }
+    .approach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
+    .approach-statement { font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700; line-height: 1.2; color: var(--text); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 2rem; }
+    .approach-statement .hl { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .approach-body { font-size: 0.95rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 1.5rem; }
+    .principle-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+    .principle-item { background: var(--surface); padding: 1.25rem 1.5rem; display: grid; grid-template-columns: 32px 1fr; gap: 1rem; align-items: start; transition: background 0.2s; }
+    .principle-item:hover { background: var(--raised); }
+    .principle-num { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-dim); letter-spacing: 0.1em; padding-top: 0.2rem; }
+    .principle-name { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+    .principle-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* CONTACT STRIP */
+    #contact-strip { border-top: 1px solid var(--border); padding: 5rem 0; }
+    .contact-strip-inner { display: flex; align-items: center; justify-content: space-between; gap: 3rem; flex-wrap: wrap; }
+    .contact-strip-title { font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 0.5rem; }
+    .contact-strip-desc { font-size: 0.9rem; color: var(--text-muted); max-width: 480px; }
+    .contact-strip-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    /* FOOTER */
+    footer { background: var(--void); border-top: 1px solid var(--border); padding: 2.5rem 0; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+    .footer-left { display: flex; align-items: center; gap: 2rem; }
+    .footer-logo { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+    .footer-copy { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.06em; }
+    .footer-links { display: flex; gap: 2rem; list-style: none; }
+    .footer-links a { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); text-decoration: none; letter-spacing: 0.08em; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--accent); }
+    .footer-credo { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; color: #FFB300; letter-spacing: 0.08em; opacity: 0.6; }
+
+    /* ANIMATIONS */
+    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* RESPONSIVE */
+    @media (max-width: 860px) {
+      .hero-body, .approach-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .problem-grid { grid-template-columns: 1fr; }
+      .section-header { grid-template-columns: 1fr; gap: 1rem; }
+      .section-number { font-size: 3rem; }
+      .product-item { grid-template-columns: 1fr; gap: 1rem; padding: 2rem; }
+      .product-num { display: none; }
+      .nav-links { display: none; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .contact-strip-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="cell-field"></canvas>
+
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <div class="nav-logo-mark">PTH</div>
+        <div class="nav-logo-text">
+          <div class="nav-logo-name">PTH Meridian</div>
+          <div class="nav-logo-sub">Bioinformatics · Calgary, CA</div>
+        </div>
+      </a>
+      <div class="nav-status">
+        <div class="nav-status-dot"></div>
+        HqA + MNTU — BIOINFORMATICS DIVISION
+      </div>
+      <ul class="nav-links">
+        <li><a href="security.html">Security</a></li>
+        <li><a href="health.html" class="active">Health</a></li>
+        <li><a href="energy.html">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+        <li><a href="index.html#contact" class="nav-cta">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <section id="hero">
+      <div class="container">
+        <div class="hero-pre">
+          <div class="hero-pre-line"></div>
+          <div class="hero-pre-text">PTH Meridian — Bioinformatics Division</div>
+        </div>
+        <h1 class="hero-title">
+          <span class="hero-title-main">Computational</span>
+          <span class="hero-title-accent">health.</span>
+        </h1>
+        <div class="hero-body">
+          <div>
+            <p class="hero-desc">Disease does not happen without cause. Finding that cause — precisely, computationally, before more people suffer — is the mission of PTH Meridian's health division. We build tools that surface the biological signal hidden inside complex clinical, genomic and molecular data.</p>
+            <div class="hero-actions">
+              <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Collaborate →</a>
+              <a href="index.html" class="btn-ghost">PTH Meridian ↗</a>
+            </div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-val">7 yrs</div>
+              <div class="stat-label">Average rare disease<br/>diagnostic delay</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val">7,000</div>
+              <div class="stat-label">Known rare<br/>diseases</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val">4M</div>
+              <div class="stat-label">Deaths annually<br/>from cooking fires</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val">700M</div>
+              <div class="stat-label">People without<br/>electricity access</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section id="products">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-number">01</div>
+          <div>
+            <div class="section-tag">Bioinformatics Division — Tools</div>
+            <h2 class="section-title">The health stack</h2>
+            <p class="section-desc">Computational tools that ask the hard questions about disease causation and molecular analysis — and find answers in data that was always there.</p>
+          </div>
+        </div>
+        <div class="product-list reveal">
+          <div class="product-item">
+            <div class="product-num">// 01</div>
+            <div>
+              <div class="product-name">HqA</div>
+              <div class="product-fullname">HARD QUESTIONS ANSWERED — DISEASE CAUSATION ENGINE</div>
+              <p class="product-desc">Disease causation mapping at the computational level. HqA is designed to surface the biological, environmental and systemic causes of disease conditions — connecting symptom patterns to root causes across genomic, clinical and epidemiological data. The goal is shorter diagnostic odysseys and clearer causal understanding.</p>
+              <div class="product-chips">
+                <span class="chip chip-accent">Disease causation mapping</span>
+                <span class="chip chip-accent">Symptom-to-diagnosis matching</span>
+                <span class="chip">Genomic variant analysis</span>
+                <span class="chip">Epidemiological data integration</span>
+                <span class="chip">Rare disease focus</span>
+                <span class="chip">In development</span>
+              </div>
+            </div>
+            <div class="product-arrow">↗</div>
+          </div>
+          <div class="product-item product-coming">
+            <div class="product-num">// 02</div>
+            <div>
+              <div class="coming-badge">Coming Soon</div>
+              <div class="product-name">MNTU</div>
+              <div class="product-fullname">MOLECULAR NODE TRACER UNIFIED — CDE ANALYSIS PLATFORM</div>
+              <p class="product-desc">Molecular network analysis for complex disease environments. MNTU traces the nodes and connections in biological molecular networks — protein interactions, metabolic pathways, gene regulatory networks — to identify where disease processes originate and propagate. The same network tracing mathematics that maps energy grids applied to the molecular machinery of life.</p>
+              <div class="product-chips">
+                <span class="chip chip-accent">Molecular network tracing</span>
+                <span class="chip">Protein interaction mapping</span>
+                <span class="chip">Metabolic pathway analysis</span>
+                <span class="chip">Gene regulatory networks</span>
+                <span class="chip">CDE platform</span>
+                <span class="chip">Planned</span>
+              </div>
+            </div>
+            <div class="product-arrow">→</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROBLEM AREAS -->
+    <section id="problems">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-number">02</div>
+          <div>
+            <div class="section-tag">Where computation changes outcomes</div>
+            <h2 class="section-title">The problems we address</h2>
+            <p class="section-desc">These are not abstract research areas. They are specific human failures — people suffering longer than necessary because the biological signal is there and we lack the computational tools to read it.</p>
+          </div>
+        </div>
+        <div class="problem-grid reveal">
+          <div class="problem-card">
+            <div class="problem-icon">// Rare Disease</div>
+            <div class="problem-name">Diagnostic Odyssey</div>
+            <p class="problem-desc">Patients with rare diseases see an average of seven specialists and wait seven years before receiving a correct diagnosis. The information to diagnose them exists in published literature and genomic databases. The computational bridge to connect it does not.</p>
+            <div class="problem-stat">7,000 rare diseases — most without computational diagnostic tools</div>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">// Antimicrobial Resistance</div>
+            <div class="problem-name">AMR Surveillance</div>
+            <p class="problem-desc">Drug-resistant infections are projected to surpass cancer as a cause of death by 2050. The resistance genes spread faster than surveillance can track them. Computational genomic surveillance connecting hospital, community and agricultural data could provide the early warning that currently does not exist.</p>
+            <div class="problem-stat">Projected 10M deaths annually by 2050 without intervention</div>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">// Data Privacy</div>
+            <div class="problem-name">Health Data Silos</div>
+            <p class="problem-desc">Medical AI advances slowly because patient data cannot be shared across institutions without privacy violations. Zero-knowledge proofs — already built in PTH Meridian's security stack — allow hospitals to contribute to global disease models without sharing a single patient record. The proof travels. The data does not.</p>
+            <div class="problem-stat">ZKP + federated learning — privacy-preserving health research</div>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">// Indigenous Health</div>
+            <div class="problem-name">Health Equity Gap</div>
+            <p class="problem-desc">Indigenous communities in Canada experience dramatically worse health outcomes across almost every measure — life expectancy, infant mortality, chronic disease rates. The causes are well documented: poverty, housing, food insecurity, trauma. The computational tools to map these causal chains and prioritize interventions are largely absent.</p>
+            <div class="problem-stat">Canadian reconciliation — health outcomes as measurable indicators</div>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">// Energy-Health Nexus</div>
+            <div class="problem-name">Energy Poverty</div>
+            <p class="problem-desc">Four million people die annually from indoor air pollution caused by cooking fires. Cold homes cause respiratory disease. No electricity means no refrigeration for vaccines or insulin. Energy poverty is a health crisis. Quantifying the health return on energy investment creates the evidence base for prioritizing life-saving infrastructure.</p>
+            <div class="problem-stat">4M deaths — more than malaria — preventable with clean energy access</div>
+          </div>
+          <div class="problem-card">
+            <div class="problem-icon">// Pandemic Preparedness</div>
+            <div class="problem-name">Early Warning</div>
+            <p class="problem-desc">COVID-19 was spreading globally for weeks before it was detected. Wastewater epidemiology, genomic surveillance and zoonotic spillover prediction could provide weeks of warning instead of days. The computational infrastructure for real-time pandemic early warning remains fragmented and underdeveloped.</p>
+            <div class="problem-stat">Weeks of warning vs days — the difference between containment and pandemic</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPROACH -->
+    <section id="approach">
+      <div class="container">
+        <div class="approach-grid">
+          <div class="reveal">
+            <div class="section-tag">// Our approach</div>
+            <div class="approach-statement">The signal is in the <span class="hl">data.</span></div>
+            <p class="approach-body">Disease does not occur without cause. Every cause leaves a biological signature. That signature exists somewhere in genomic sequences, clinical records, molecular interaction networks, environmental measurements and epidemiological patterns.</p>
+            <p class="approach-body">The challenge is not data availability — it is the computational tools to read what the data is saying. HqA and MNTU are being built to close that gap — open source, auditable and designed for the Canadian health research context first.</p>
+            <p class="approach-body">We build with privacy at the foundation. Patient data never leaves its institution. Zero-knowledge proofs from the security stack allow contribution to research without disclosure. The architecture is designed for PIPEDA compliance from day one.</p>
+          </div>
+          <div class="reveal">
+            <div class="section-tag">// Core principles</div>
+            <div class="principle-list">
+              <div class="principle-item">
+                <div class="principle-num">01</div>
+                <div>
+                  <div class="principle-name">Causation Not Correlation</div>
+                  <div class="principle-desc">We are not building pattern-matching tools. We are building causal inference tools. Knowing what happens together is not knowing why. Why is what saves lives.</div>
+                </div>
+              </div>
+              <div class="principle-item">
+                <div class="principle-num">02</div>
+                <div>
+                  <div class="principle-name">Privacy By Design</div>
+                  <div class="principle-desc">Health data is the most sensitive data that exists. Every tool is designed so patient information never leaves the institution that holds it. ZKP makes this mathematically guaranteed — not just policy.</div>
+                </div>
+              </div>
+              <div class="principle-item">
+                <div class="principle-num">03</div>
+                <div>
+                  <div class="principle-name">Open Source</div>
+                  <div class="principle-desc">Every algorithm is auditable. Every model is inspectable. In health research, black boxes are unacceptable. The community must be able to verify what the tool is actually doing.</div>
+                </div>
+              </div>
+              <div class="principle-item">
+                <div class="principle-num">04</div>
+                <div>
+                  <div class="principle-name">Canadian Context First</div>
+                  <div class="principle-desc">Indigenous health outcomes, rare disease diagnosis, pandemic preparedness, antimicrobial resistance — we start with Canadian problems, Canadian data and Canadian research partnerships. The tools then apply globally.</div>
+                </div>
+              </div>
+              <div class="principle-item">
+                <div class="principle-num">05</div>
+                <div>
+                  <div class="principle-name">Equity As Outcome</div>
+                  <div class="principle-desc">A health tool that only benefits wealthy well-resourced institutions has failed. The design goal is tools that reduce health disparities — not amplify them.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact-strip">
+      <div class="container">
+        <div class="contact-strip-inner reveal">
+          <div>
+            <div class="contact-strip-title">Research collaboration welcome</div>
+            <p class="contact-strip-desc">HqA and MNTU are in active development. We welcome collaboration from Canadian health researchers, genomicists and bioinformaticians working on disease causation and rare disease diagnosis.</p>
+          </div>
+          <div class="contact-strip-actions">
+            <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Get in touch →</a>
+            <a href="index.html" class="btn-ghost">PTH Meridian ↗</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-logo">PTH Meridian</div>
+        <div class="footer-copy">© 2026 Adel Tammam · Calgary, Alberta, Canada</div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="security.html">Security</a></li>
+        <li><a href="health.html">Health</a></li>
+        <li><a href="energy.html">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+      </ul>
+      <div class="footer-credo">Ask. Solve. Done.</div>
+    </div>
+  </footer>
+
+  <script>
+    // Bioluminescent cell animation
+    const canvas = document.getElementById('cell-field');
+    const ctx = canvas.getContext('2d');
+    let W, H, cells;
+    const CELL_COUNT = 18;
+
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+
+    function createCell() {
+      const r = Math.random() * 60 + 20;
+      return {
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15,
+        r,
+        pulsePhase: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.008 + 0.004,
+        opacity: Math.random() * 0.08 + 0.03,
+        nucleusR: r * (Math.random() * 0.25 + 0.15),
+      };
+    }
+
+    function init() { resize(); cells = Array.from({ length: CELL_COUNT }, createCell); }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const t = Date.now() * 0.001;
+
+      cells.forEach(cell => {
+        cell.x += cell.vx;
+        cell.y += cell.vy;
+        if (cell.x < -cell.r * 2) cell.x = W + cell.r;
+        if (cell.x > W + cell.r * 2) cell.x = -cell.r;
+        if (cell.y < -cell.r * 2) cell.y = H + cell.r;
+        if (cell.y > H + cell.r * 2) cell.y = -cell.r;
+
+        const pulse = Math.sin(t * cell.pulseSpeed * 100 + cell.pulsePhase) * 0.15 + 1;
+        const r = cell.r * pulse;
+        const opacity = cell.opacity;
+
+        // Cell membrane
+        ctx.beginPath();
+        ctx.arc(cell.x, cell.y, r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(0,255,136,${opacity * 2})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Cell glow
+        const grad = ctx.createRadialGradient(cell.x, cell.y, 0, cell.x, cell.y, r);
+        grad.addColorStop(0, `rgba(0,255,136,${opacity * 0.3})`);
+        grad.addColorStop(0.6, `rgba(0,229,160,${opacity * 0.1})`);
+        grad.addColorStop(1, `rgba(0,255,136,0)`);
+        ctx.beginPath();
+        ctx.arc(cell.x, cell.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Nucleus
+        ctx.beginPath();
+        ctx.arc(cell.x + r * 0.1, cell.y - r * 0.05, cell.nucleusR * pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(0,255,136,${opacity * 1.5})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    init(); draw();
+
+    // Nav + reveal
+    window.addEventListener('scroll', () => {
+      document.querySelector('nav').style.borderBottomColor = window.scrollY > 40 ? 'rgba(22,61,40,0.8)' : 'var(--border)';
+    });
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('visible'), i * 100); observer.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
