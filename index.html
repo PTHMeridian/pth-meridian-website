@@ -8,7 +8,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 
   <style>
     :root {
@@ -27,7 +27,7 @@
       --text:       #D4E2F4;
       --text-muted: #4A6490;
       --text-dim:   #243050;
-      --font-display: 'Barlow Condensed', sans-serif;
+      --font-display: 'Syne', sans-serif;
       --font-body:    'IBM Plex Sans', sans-serif;
       --font-mono:    'IBM Plex Mono', monospace;
     }
@@ -139,11 +139,10 @@
 
     .nav-logo-name {
       font-family: var(--font-display);
-      font-size: 1.15rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--text);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
       line-height: 1;
     }
 
@@ -253,12 +252,11 @@
 
     .hero-title {
       font-family: var(--font-display);
-      font-size: clamp(3.5rem, 10vw, 9rem);
+      font-size: clamp(3.5rem, 9vw, 8rem);
       font-weight: 800;
-      line-height: 0.96;
-      letter-spacing: 0.01em;
-      text-transform: uppercase;
-      margin-bottom: 2.5rem;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-bottom: 2rem;
       opacity: 0;
       animation: slideIn 0.7s ease forwards 0.5s;
     }
@@ -439,12 +437,12 @@
 
     .section-number {
       font-family: var(--font-display);
-      font-size: 4rem;
+      font-size: 6rem;
       font-weight: 800;
       color: var(--text-dim);
       line-height: 1;
       letter-spacing: -0.04em;
-      margin-top: -0.25rem;
+      margin-top: -0.5rem;
     }
 
     .section-meta {
@@ -527,11 +525,10 @@
 
     .product-name {
       font-family: var(--font-display);
-      font-size: 2.5rem;
-      font-weight: 800;
+      font-size: 2rem;
+      font-weight: 700;
       color: var(--text);
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
+      letter-spacing: -0.02em;
       line-height: 1;
     }
 
@@ -603,8 +600,7 @@
       font-weight: 700;
       line-height: 1.2;
       color: var(--text);
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
+      letter-spacing: -0.02em;
       margin-bottom: 2rem;
     }
 
@@ -684,12 +680,11 @@
 
     .entity-name {
       font-family: var(--font-display);
-      font-size: 1.4rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: var(--text);
       margin-bottom: 0.5rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+      letter-spacing: -0.01em;
     }
 
     .entity-desc {
@@ -763,11 +758,9 @@
 
     .founder-name {
       font-family: var(--font-display);
-      font-size: 1.6rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--text);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
       margin-bottom: 0.25rem;
     }
 
@@ -947,11 +940,10 @@
 
     .footer-logo {
       font-family: var(--font-display);
-      font-size: 1.1rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: var(--text-muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .footer-copy {
