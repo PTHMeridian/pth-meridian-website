@@ -10,117 +10,66 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --void:       #030D08;
-      --deep:       #061410;
-      --surface:    #0A1E16;
-      --raised:     #0F2A1E;
-      --border:     #163D28;
-      --border-hi:  #1F5438;
-      --accent:     #00FF88;
-      --accent-dim: #007A40;
-      --accent-glow:rgba(0,255,136,0.1);
-      --accent2:    #00E5A0;
-      --accent3:    #39FF14;
-      --text:       #C8E8D4;
-      --text-muted: #3D7A58;
-      --text-dim:   #1A3D28;
+      --void:        #06000D;
+      --deep:        #0A0014;
+      --surface:     #100020;
+      --raised:      #160030;
+      --border:      #2A0050;
+      --border-hi:   #420080;
+      --accent:      #E040FB;
+      --accent-dim:  #6A0099;
+      --accent-glow: rgba(224,64,251,0.10);
+      --accent2:     #FF00AA;
+      --accent3:     #CE93D8;
+      --text:        #F0D4FF;
+      --text-muted:  #6A3D80;
+      --text-dim:    #2A1040;
       --font-display:'Barlow Condensed', sans-serif;
-      --font-body:  'IBM Plex Sans', sans-serif;
-      --font-mono:  'IBM Plex Mono', monospace;
+      --font-body:   'IBM Plex Sans', sans-serif;
+      --font-mono:   'IBM Plex Mono', monospace;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body {
-      background: var(--void);
-      color: var(--text);
-      font-family: var(--font-body);
-      font-weight: 300;
-      font-size: 16px;
-      line-height: 1.7;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
+    body { background: var(--void); color: var(--text); font-family: var(--font-body); font-weight: 300; font-size: 16px; line-height: 1.7; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
     ::selection { background: var(--accent); color: var(--void); }
 
-    /* CELL CANVAS */
-    #cell-field {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
+    #micro-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at center, transparent 40%, rgba(6,0,13,0.6) 100%); pointer-events: none; z-index: 1; }
     nav, main, footer { position: relative; z-index: 2; }
 
     /* NAV */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      border-bottom: 1px solid var(--border);
-      background: rgba(3,13,8,0.88);
-      backdrop-filter: blur(20px);
-    }
-    .nav-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(6,0,13,0.90); backdrop-filter: blur(20px); }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
     .nav-logo { display: flex; align-items: center; gap: 1rem; text-decoration: none; }
-    .nav-logo-mark {
-      width: 32px; height: 32px;
-      border: 1px solid var(--accent);
-      border-radius: 2px;
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--accent);
-      box-shadow: 0 0 12px var(--accent-glow), inset 0 0 12px var(--accent-glow);
-      animation: pulse-border 3s ease-in-out infinite;
-    }
-    @keyframes pulse-border {
-      0%, 100% { box-shadow: 0 0 8px var(--accent-glow), inset 0 0 8px var(--accent-glow); }
-      50% { box-shadow: 0 0 20px rgba(0,255,136,0.2), inset 0 0 20px rgba(0,255,136,0.08); }
-    }
+    .nav-logo-mark { width: 32px; height: 32px; border: 1px solid var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); box-shadow: 0 0 12px var(--accent-glow), inset 0 0 12px var(--accent-glow); animation: pulse-border 3s ease-in-out infinite; }
+    @keyframes pulse-border { 0%,100%{box-shadow:0 0 8px var(--accent-glow),inset 0 0 8px var(--accent-glow);}50%{box-shadow:0 0 20px rgba(224,64,251,.2),inset 0 0 20px rgba(224,64,251,.08);} }
     .nav-logo-text { display: flex; flex-direction: column; gap: 1px; }
     .nav-logo-name { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; }
     .nav-logo-sub { font-family: var(--font-mono); font-size: 0.55rem; color: var(--accent-dim); letter-spacing: 0.16em; text-transform: uppercase; }
-    .nav-status { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent2); letter-spacing: 0.1em; }
-    .nav-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: blink 2s ease-in-out infinite; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+    .nav-status { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent3); letter-spacing: 0.1em; }
+    .nav-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;}50%{opacity:0.2;} }
     .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
     .nav-links a { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
     .nav-links a:hover, .nav-links a.active { color: var(--accent); }
-    .nav-cta { border: 1px solid var(--accent-dim) !important; padding: 0.35rem 1rem; color: var(--accent) !important; transition: all 0.2s !important; }
+    .nav-cta { border: 1px solid var(--accent-dim) !important; padding: 0.35rem 1rem; color: var(--accent) !important; }
     .nav-cta:hover { background: var(--accent) !important; color: var(--void) !important; }
 
     /* HERO */
     #hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 0 6rem; }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; width: 100%; }
-    .hero-pre { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; opacity: 0; animation: slideIn 0.6s ease forwards 0.3s; }
+    .hero-pre { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; opacity: 0; animation: fadeUp 0.6s ease forwards 0.3s; }
     .hero-pre-line { width: 40px; height: 1px; background: var(--accent); }
     .hero-pre-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; }
-    .hero-title { font-family: var(--font-display); font-size: clamp(3.5rem, 10vw, 9rem); font-weight: 800; line-height: 0.96; letter-spacing: 0.01em; text-transform: uppercase; margin-bottom: 2.5rem; opacity: 0; animation: slideIn 0.7s ease forwards 0.5s; }
-    .hero-title-main { display: block; color: var(--text); }
-    .hero-title-accent { display: block; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .hero-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; opacity: 0; animation: slideIn 0.7s ease forwards 0.8s; }
-    .hero-desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 2.5rem; }
-    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(3.5rem, 10vw, 9rem); font-weight: 800; line-height: 0.96; letter-spacing: 0.01em; text-transform: uppercase; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 0.7s ease forwards 0.5s; }
+    .hero-title .t1 { display: block; color: var(--text); }
+    .hero-title .t2 { display: block; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.85; max-width: 600px; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 0.7s ease forwards 0.8s; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s ease forwards 1s; }
     .btn-primary { display: inline-flex; align-items: center; gap: 0.6rem; background: var(--accent); color: var(--void); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; padding: 0.9rem 2rem; text-decoration: none; transition: all 0.2s; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
-    .btn-primary:hover { background: #fff; box-shadow: 0 0 30px rgba(0,255,136,0.4); transform: translateY(-2px); }
+    .btn-primary:hover { background: #fff; box-shadow: 0 0 30px rgba(224,64,251,0.4); transform: translateY(-2px); }
     .btn-ghost { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; padding: 0.9rem 1.5rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.2s; }
     .btn-ghost:hover { color: var(--text); border-color: var(--border-hi); }
-
-    /* STAT CARDS */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
-    .stat-card { background: var(--deep); padding: 1.5rem; transition: background 0.2s; }
-    .stat-card:hover { background: var(--surface); }
-    .stat-val { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; margin-bottom: 0.35rem; letter-spacing: 0.02em; text-transform: uppercase; }
-    .stat-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.4; }
 
     /* SECTIONS */
     section { padding: 7rem 0; }
@@ -130,55 +79,53 @@
     .section-title { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 700; color: var(--text); line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 1rem; }
     .section-desc { font-size: 0.95rem; color: var(--text-muted); max-width: 520px; line-height: 1.8; }
 
-    /* PRODUCT LIST */
-    #products { background: var(--deep); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    /* PRODUCTS */
+    #products { background: rgba(10,0,20,0.7); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
     .product-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
-    .product-item { background: var(--void); padding: 2.5rem 3rem; display: grid; grid-template-columns: 60px 1fr auto; gap: 2rem; align-items: start; transition: background 0.2s; text-decoration: none; color: inherit; }
+    .product-item { background: var(--deep); padding: 2.5rem 3rem; display: grid; grid-template-columns: 60px 1fr auto; gap: 2rem; align-items: start; transition: background 0.2s; text-decoration: none; color: inherit; }
     .product-item:hover { background: var(--surface); }
-    .product-item:hover .product-arrow { transform: translate(4px, -4px); color: var(--accent); }
+    .product-item:hover .product-arrow { transform: translate(4px,-4px); color: var(--accent); }
     .product-num { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); letter-spacing: 0.1em; padding-top: 0.35rem; }
-    .product-name { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; color: var(--text); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; margin-bottom: 0.25rem; }
+    .product-name { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; color: var(--accent); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; margin-bottom: 0.25rem; }
     .product-fullname { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent-dim); letter-spacing: 0.06em; margin-bottom: 1rem; }
     .product-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.75; max-width: 600px; margin-bottom: 1.5rem; }
     .product-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .chip { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); background: var(--raised); border: 1px solid var(--border); padding: 0.25rem 0.65rem; letter-spacing: 0.06em; }
     .chip-accent { color: var(--accent); border-color: var(--accent-dim); }
     .product-arrow { font-size: 1.25rem; color: var(--border-hi); transition: all 0.2s; padding-top: 0.25rem; }
-    .product-coming { opacity: 0.45; cursor: default; }
-    .product-coming:hover { background: var(--void); }
-    .product-coming:hover .product-arrow { transform: none; color: var(--border-hi); }
     .coming-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.6rem; color: #FFB300; border: 1px solid #7A5500; padding: 0.2rem 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem; }
+    .product-coming { opacity: 0.5; }
+    .product-coming:hover { background: var(--deep); }
 
-    /* PROBLEM AREAS */
+    /* PROBLEMS */
     .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 3rem; }
     .problem-card { background: var(--surface); padding: 2rem; transition: background 0.2s; }
     .problem-card:hover { background: var(--raised); }
-    .problem-icon { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1rem; }
+    .problem-tag { font-family: var(--font-mono); font-size: 0.62rem; color: var(--accent-dim); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.75rem; }
     .problem-name { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem; }
     .problem-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1rem; }
-    .problem-stat { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent2); letter-spacing: 0.06em; }
+    .problem-stat { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent3); letter-spacing: 0.06em; }
 
     /* APPROACH */
-    #approach { background: var(--deep); border-top: 1px solid var(--border); }
+    #approach { background: rgba(10,0,20,0.7); border-top: 1px solid var(--border); }
     .approach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
-    .approach-statement { font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700; line-height: 1.2; color: var(--text); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 2rem; }
+    .approach-statement { font-family: var(--font-display); font-size: clamp(1.75rem,3vw,2.5rem); font-weight: 700; line-height: 1.2; color: var(--text); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 2rem; }
     .approach-statement .hl { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .approach-body { font-size: 0.95rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 1.5rem; }
     .principle-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
     .principle-item { background: var(--surface); padding: 1.25rem 1.5rem; display: grid; grid-template-columns: 32px 1fr; gap: 1rem; align-items: start; transition: background 0.2s; }
     .principle-item:hover { background: var(--raised); }
     .principle-num { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-dim); letter-spacing: 0.1em; padding-top: 0.2rem; }
-    .principle-name { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+    .principle-name { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
     .principle-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
 
-    /* CONTACT STRIP */
+    /* CONTACT */
     #contact-strip { border-top: 1px solid var(--border); padding: 5rem 0; }
     .contact-strip-inner { display: flex; align-items: center; justify-content: space-between; gap: 3rem; flex-wrap: wrap; }
-    .contact-strip-title { font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 0.5rem; }
+    .contact-strip-title { font-family: var(--font-display); font-size: clamp(1.5rem,3vw,2.5rem); font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 0.5rem; }
     .contact-strip-desc { font-size: 0.9rem; color: var(--text-muted); max-width: 480px; }
     .contact-strip-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
 
-    /* FOOTER */
     footer { background: var(--void); border-top: 1px solid var(--border); padding: 2.5rem 0; }
     .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
     .footer-left { display: flex; align-items: center; gap: 2rem; }
@@ -189,28 +136,25 @@
     .footer-links a:hover { color: var(--accent); }
     .footer-credo { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; color: #FFB300; letter-spacing: 0.08em; opacity: 0.6; }
 
-    /* ANIMATIONS */
-    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.65s ease, transform 0.65s ease; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .65s ease,transform .65s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
 
-    /* RESPONSIVE */
-    @media (max-width: 860px) {
-      .hero-body, .approach-grid { grid-template-columns: 1fr; gap: 3rem; }
-      .problem-grid { grid-template-columns: 1fr; }
-      .section-header { grid-template-columns: 1fr; gap: 1rem; }
-      .section-number { font-size: 3rem; }
-      .product-item { grid-template-columns: 1fr; gap: 1rem; padding: 2rem; }
-      .product-num { display: none; }
-      .nav-links { display: none; }
-      .stat-grid { grid-template-columns: 1fr 1fr; }
-      .contact-strip-inner { flex-direction: column; }
+    @media (max-width:860px) {
+      .approach-grid{grid-template-columns:1fr;gap:3rem;}
+      .problem-grid{grid-template-columns:1fr;}
+      .section-header{grid-template-columns:1fr;gap:1rem;}
+      .section-number{font-size:3rem;}
+      .product-item{grid-template-columns:1fr;gap:1rem;padding:2rem;}
+      .product-num{display:none;}
+      .nav-links{display:none;}
+      .contact-strip-inner{flex-direction:column;}
     }
   </style>
 </head>
 <body>
 
-  <canvas id="cell-field"></canvas>
+  <canvas id="micro-canvas"></canvas>
 
   <nav id="nav">
     <div class="nav-inner">
@@ -244,35 +188,13 @@
           <div class="hero-pre-text">PTH Meridian — Bioinformatics Division</div>
         </div>
         <h1 class="hero-title">
-          <span class="hero-title-main">Computational</span>
-          <span class="hero-title-accent">health.</span>
+          <span class="t1">Computational</span>
+          <span class="t2">health.</span>
         </h1>
-        <div class="hero-body">
-          <div>
-            <p class="hero-desc">Disease does not happen without cause. Finding that cause — precisely, computationally, before more people suffer — is the mission of PTH Meridian's health division. We build tools that surface the biological signal hidden inside complex clinical, genomic and molecular data.</p>
-            <div class="hero-actions">
-              <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Collaborate →</a>
-              <a href="index.html" class="btn-ghost">PTH Meridian ↗</a>
-            </div>
-          </div>
-          <div class="stat-grid">
-            <div class="stat-card">
-              <div class="stat-val">7 yrs</div>
-              <div class="stat-label">Average rare disease<br/>diagnostic delay</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-val">7,000</div>
-              <div class="stat-label">Known rare<br/>diseases</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-val">4M</div>
-              <div class="stat-label">Deaths annually<br/>from cooking fires</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-val">700M</div>
-              <div class="stat-label">People without<br/>electricity access</div>
-            </div>
-          </div>
+        <p class="hero-desc">Disease does not happen without cause. Finding that cause — precisely, computationally, before more people suffer — is the mission of PTH Meridian's health division. We build tools that surface the biological signal hidden inside complex clinical, genomic and molecular data.</p>
+        <div class="hero-actions">
+          <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Collaborate →</a>
+          <a href="index.html" class="btn-ghost">PTH Meridian ↗</a>
         </div>
       </div>
     </section>
@@ -294,12 +216,11 @@
             <div>
               <div class="product-name">HqA</div>
               <div class="product-fullname">HARD QUESTIONS ANSWERED — DISEASE CAUSATION ENGINE</div>
-              <p class="product-desc">Disease causation mapping at the computational level. HqA is designed to surface the biological, environmental and systemic causes of disease conditions — connecting symptom patterns to root causes across genomic, clinical and epidemiological data. The goal is shorter diagnostic odysseys and clearer causal understanding.</p>
+              <p class="product-desc">Disease causation mapping at the computational level. HqA surfaces the biological, environmental and systemic causes of disease — connecting symptom patterns to root causes across genomic, clinical and epidemiological data. Shorter diagnostic odysseys. Clearer causal understanding.</p>
               <div class="product-chips">
                 <span class="chip chip-accent">Disease causation mapping</span>
                 <span class="chip chip-accent">Symptom-to-diagnosis matching</span>
                 <span class="chip">Genomic variant analysis</span>
-                <span class="chip">Epidemiological data integration</span>
                 <span class="chip">Rare disease focus</span>
                 <span class="chip">In development</span>
               </div>
@@ -312,12 +233,11 @@
               <div class="coming-badge">Coming Soon</div>
               <div class="product-name">MNTU</div>
               <div class="product-fullname">MOLECULAR NODE TRACER UNIFIED — CDE ANALYSIS PLATFORM</div>
-              <p class="product-desc">Molecular network analysis for complex disease environments. MNTU traces the nodes and connections in biological molecular networks — protein interactions, metabolic pathways, gene regulatory networks — to identify where disease processes originate and propagate. The same network tracing mathematics that maps energy grids applied to the molecular machinery of life.</p>
+              <p class="product-desc">Molecular network analysis for complex disease environments. MNTU traces nodes and connections in biological molecular networks — protein interactions, metabolic pathways, gene regulatory networks — to identify where disease processes originate and propagate.</p>
               <div class="product-chips">
                 <span class="chip chip-accent">Molecular network tracing</span>
                 <span class="chip">Protein interaction mapping</span>
                 <span class="chip">Metabolic pathway analysis</span>
-                <span class="chip">Gene regulatory networks</span>
                 <span class="chip">CDE platform</span>
                 <span class="chip">Planned</span>
               </div>
@@ -328,7 +248,7 @@
       </div>
     </section>
 
-    <!-- PROBLEM AREAS -->
+    <!-- PROBLEMS -->
     <section id="problems">
       <div class="container">
         <div class="section-header reveal">
@@ -336,44 +256,44 @@
           <div>
             <div class="section-tag">Where computation changes outcomes</div>
             <h2 class="section-title">The problems we address</h2>
-            <p class="section-desc">These are not abstract research areas. They are specific human failures — people suffering longer than necessary because the biological signal is there and we lack the computational tools to read it.</p>
+            <p class="section-desc">People suffering longer than necessary because the biological signal is there and we lack the computational tools to read it.</p>
           </div>
         </div>
         <div class="problem-grid reveal">
           <div class="problem-card">
-            <div class="problem-icon">// Rare Disease</div>
+            <div class="problem-tag">// Rare Disease</div>
             <div class="problem-name">Diagnostic Odyssey</div>
-            <p class="problem-desc">Patients with rare diseases see an average of seven specialists and wait seven years before receiving a correct diagnosis. The information to diagnose them exists in published literature and genomic databases. The computational bridge to connect it does not.</p>
+            <p class="problem-desc">Patients with rare diseases see an average of seven specialists and wait seven years before a correct diagnosis. The information exists. The computational bridge does not.</p>
             <div class="problem-stat">7,000 rare diseases — most without computational diagnostic tools</div>
           </div>
           <div class="problem-card">
-            <div class="problem-icon">// Antimicrobial Resistance</div>
+            <div class="problem-tag">// Antimicrobial Resistance</div>
             <div class="problem-name">AMR Surveillance</div>
-            <p class="problem-desc">Drug-resistant infections are projected to surpass cancer as a cause of death by 2050. The resistance genes spread faster than surveillance can track them. Computational genomic surveillance connecting hospital, community and agricultural data could provide the early warning that currently does not exist.</p>
+            <p class="problem-desc">Drug-resistant infections projected to surpass cancer as a cause of death by 2050. Resistance genes spread faster than surveillance tracks them. Computational genomic surveillance could provide early warning.</p>
             <div class="problem-stat">Projected 10M deaths annually by 2050 without intervention</div>
           </div>
           <div class="problem-card">
-            <div class="problem-icon">// Data Privacy</div>
+            <div class="problem-tag">// Data Privacy</div>
             <div class="problem-name">Health Data Silos</div>
-            <p class="problem-desc">Medical AI advances slowly because patient data cannot be shared across institutions without privacy violations. Zero-knowledge proofs — already built in PTH Meridian's security stack — allow hospitals to contribute to global disease models without sharing a single patient record. The proof travels. The data does not.</p>
+            <p class="problem-desc">Medical AI advances slowly because patient data cannot be shared without privacy violations. Zero-knowledge proofs — built in the security stack — allow hospitals to contribute to global disease models without sharing a single patient record.</p>
             <div class="problem-stat">ZKP + federated learning — privacy-preserving health research</div>
           </div>
           <div class="problem-card">
-            <div class="problem-icon">// Indigenous Health</div>
+            <div class="problem-tag">// Indigenous Health</div>
             <div class="problem-name">Health Equity Gap</div>
-            <p class="problem-desc">Indigenous communities in Canada experience dramatically worse health outcomes across almost every measure — life expectancy, infant mortality, chronic disease rates. The causes are well documented: poverty, housing, food insecurity, trauma. The computational tools to map these causal chains and prioritize interventions are largely absent.</p>
+            <p class="problem-desc">Indigenous communities in Canada experience dramatically worse health outcomes across almost every measure. Computational tools to map causal chains and prioritize interventions are largely absent.</p>
             <div class="problem-stat">Canadian reconciliation — health outcomes as measurable indicators</div>
           </div>
           <div class="problem-card">
-            <div class="problem-icon">// Energy-Health Nexus</div>
+            <div class="problem-tag">// Energy-Health Nexus</div>
             <div class="problem-name">Energy Poverty</div>
-            <p class="problem-desc">Four million people die annually from indoor air pollution caused by cooking fires. Cold homes cause respiratory disease. No electricity means no refrigeration for vaccines or insulin. Energy poverty is a health crisis. Quantifying the health return on energy investment creates the evidence base for prioritizing life-saving infrastructure.</p>
-            <div class="problem-stat">4M deaths — more than malaria — preventable with clean energy access</div>
+            <p class="problem-desc">Four million people die annually from indoor air pollution caused by cooking fires. No electricity means no refrigeration for vaccines or insulin. Quantifying the health return on energy investment creates the evidence base for life-saving infrastructure.</p>
+            <div class="problem-stat">4M deaths annually — preventable with clean energy access</div>
           </div>
           <div class="problem-card">
-            <div class="problem-icon">// Pandemic Preparedness</div>
+            <div class="problem-tag">// Pandemic Preparedness</div>
             <div class="problem-name">Early Warning</div>
-            <p class="problem-desc">COVID-19 was spreading globally for weeks before it was detected. Wastewater epidemiology, genomic surveillance and zoonotic spillover prediction could provide weeks of warning instead of days. The computational infrastructure for real-time pandemic early warning remains fragmented and underdeveloped.</p>
+            <p class="problem-desc">COVID-19 was spreading globally for weeks before detection. Wastewater epidemiology, genomic surveillance and zoonotic spillover prediction could provide weeks of warning. The computational infrastructure for real-time pandemic early warning remains fragmented.</p>
             <div class="problem-stat">Weeks of warning vs days — the difference between containment and pandemic</div>
           </div>
         </div>
@@ -387,9 +307,9 @@
           <div class="reveal">
             <div class="section-tag">// Our approach</div>
             <div class="approach-statement">The signal is in the <span class="hl">data.</span></div>
-            <p class="approach-body">Disease does not occur without cause. Every cause leaves a biological signature. That signature exists somewhere in genomic sequences, clinical records, molecular interaction networks, environmental measurements and epidemiological patterns.</p>
-            <p class="approach-body">The challenge is not data availability — it is the computational tools to read what the data is saying. HqA and MNTU are being built to close that gap — open source, auditable and designed for the Canadian health research context first.</p>
-            <p class="approach-body">We build with privacy at the foundation. Patient data never leaves its institution. Zero-knowledge proofs from the security stack allow contribution to research without disclosure. The architecture is designed for PIPEDA compliance from day one.</p>
+            <p class="approach-body">Disease does not occur without cause. Every cause leaves a biological signature somewhere in genomic sequences, clinical records, molecular interaction networks, environmental measurements and epidemiological patterns.</p>
+            <p class="approach-body">HqA and MNTU are built to close the gap between data that exists and understanding that does not yet. Open source, auditable and designed for the Canadian health research context first.</p>
+            <p class="approach-body">Privacy is foundational. Zero-knowledge proofs from the security stack mean patient data never leaves its institution — the proof travels, the data does not. PIPEDA compliant by design.</p>
           </div>
           <div class="reveal">
             <div class="section-tag">// Core principles</div>
@@ -398,35 +318,35 @@
                 <div class="principle-num">01</div>
                 <div>
                   <div class="principle-name">Causation Not Correlation</div>
-                  <div class="principle-desc">We are not building pattern-matching tools. We are building causal inference tools. Knowing what happens together is not knowing why. Why is what saves lives.</div>
+                  <div class="principle-desc">Knowing what happens together is not knowing why. Why is what saves lives. We build causal inference tools, not pattern-matching tools.</div>
                 </div>
               </div>
               <div class="principle-item">
                 <div class="principle-num">02</div>
                 <div>
                   <div class="principle-name">Privacy By Design</div>
-                  <div class="principle-desc">Health data is the most sensitive data that exists. Every tool is designed so patient information never leaves the institution that holds it. ZKP makes this mathematically guaranteed — not just policy.</div>
+                  <div class="principle-desc">Health data is the most sensitive data that exists. ZKP makes privacy mathematically guaranteed — not just policy.</div>
                 </div>
               </div>
               <div class="principle-item">
                 <div class="principle-num">03</div>
                 <div>
                   <div class="principle-name">Open Source</div>
-                  <div class="principle-desc">Every algorithm is auditable. Every model is inspectable. In health research, black boxes are unacceptable. The community must be able to verify what the tool is actually doing.</div>
+                  <div class="principle-desc">Every algorithm auditable. Every model inspectable. In health research, black boxes are unacceptable.</div>
                 </div>
               </div>
               <div class="principle-item">
                 <div class="principle-num">04</div>
                 <div>
                   <div class="principle-name">Canadian Context First</div>
-                  <div class="principle-desc">Indigenous health outcomes, rare disease diagnosis, pandemic preparedness, antimicrobial resistance — we start with Canadian problems, Canadian data and Canadian research partnerships. The tools then apply globally.</div>
+                  <div class="principle-desc">Indigenous health outcomes, rare disease, pandemic preparedness — Canadian problems first. The tools then apply globally.</div>
                 </div>
               </div>
               <div class="principle-item">
                 <div class="principle-num">05</div>
                 <div>
                   <div class="principle-name">Equity As Outcome</div>
-                  <div class="principle-desc">A health tool that only benefits wealthy well-resourced institutions has failed. The design goal is tools that reduce health disparities — not amplify them.</div>
+                  <div class="principle-desc">A health tool that only benefits well-resourced institutions has failed. The design goal is tools that reduce health disparities, not amplify them.</div>
                 </div>
               </div>
             </div>
@@ -435,13 +355,12 @@
       </div>
     </section>
 
-    <!-- CONTACT -->
     <section id="contact-strip">
       <div class="container">
         <div class="contact-strip-inner reveal">
           <div>
             <div class="contact-strip-title">Research collaboration welcome</div>
-            <p class="contact-strip-desc">HqA and MNTU are in active development. We welcome collaboration from Canadian health researchers, genomicists and bioinformaticians working on disease causation and rare disease diagnosis.</p>
+            <p class="contact-strip-desc">HqA and MNTU are in active development. We welcome collaboration from Canadian health researchers, genomicists and bioinformaticians.</p>
           </div>
           <div class="contact-strip-actions">
             <a href="mailto:adel.tammam@pth-meridian.io" class="btn-primary">Get in touch →</a>
@@ -471,86 +390,269 @@
   </footer>
 
   <script>
-    // Bioluminescent cell animation
-    const canvas = document.getElementById('cell-field');
+    const canvas = document.getElementById('micro-canvas');
     const ctx = canvas.getContext('2d');
-    let W, H, cells;
-    const CELL_COUNT = 18;
+    let W, H, organisms = [];
+    const COLOR = '#E040FB';
+    const COLOR2 = '#FF00AA';
+    const COLOR3 = '#CE93D8';
 
-    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    // ============================================================
+    // MICROORGANISM TYPES — outline only, biologically styled
+    // ============================================================
 
-    function createCell() {
-      const r = Math.random() * 60 + 20;
-      return {
-        x: Math.random() * W,
-        y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15,
-        r,
-        pulsePhase: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.008 + 0.004,
-        opacity: Math.random() * 0.08 + 0.03,
-        nucleusR: r * (Math.random() * 0.25 + 0.15),
-      };
+    // Bacillus — rod-shaped bacterium, tumbles as it swims
+    class Bacillus {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 0.4 + 0.15;
+        this.length = Math.random() * 28 + 14;
+        this.width = this.length * 0.32;
+        this.rotSpeed = (Math.random() - 0.5) * 0.012;
+        this.tumbleTimer = 0;
+        this.tumbleInterval = 200 + Math.random() * 300;
+        this.alpha = Math.random() * 0.18 + 0.06;
+        this.color = Math.random() < 0.7 ? COLOR : COLOR2;
+      }
+      update() {
+        // Tumble and run — bacteria swim straight then randomly reorient
+        this.tumbleTimer++;
+        if (this.tumbleTimer > this.tumbleInterval) {
+          this.angle += (Math.random() - 0.5) * Math.PI;
+          this.tumbleTimer = 0;
+          this.tumbleInterval = 200 + Math.random() * 300;
+        }
+        this.angle += this.rotSpeed;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        if (this.x < -60) this.x = W + 60;
+        if (this.x > W + 60) this.x = -60;
+        if (this.y < -60) this.y = H + 60;
+        if (this.y > H + 60) this.y = -60;
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.globalAlpha = this.alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 1.2;
+        // Rounded rectangle — rod shape
+        const hw = this.width / 2;
+        const hl = this.length / 2;
+        const r = hw;
+        ctx.beginPath();
+        ctx.moveTo(-hl + r, -hw);
+        ctx.lineTo(hl - r, -hw);
+        ctx.quadraticCurveTo(hl, -hw, hl, 0);
+        ctx.quadraticCurveTo(hl, hw, hl - r, hw);
+        ctx.lineTo(-hl + r, hw);
+        ctx.quadraticCurveTo(-hl, hw, -hl, 0);
+        ctx.quadraticCurveTo(-hl, -hw, -hl + r, -hw);
+        ctx.closePath();
+        ctx.stroke();
+        // Flagellum — single wavy line at one end
+        const t = Date.now() * 0.004;
+        ctx.beginPath();
+        ctx.moveTo(hl, 0);
+        for (let i = 0; i <= 12; i++) {
+          const fx = hl + (i / 12) * this.length * 0.8;
+          const fy = Math.sin(i * 0.8 + t + this.x * 0.01) * 4;
+          ctx.lineTo(fx, fy);
+        }
+        ctx.globalAlpha = this.alpha * 0.6;
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
-    function init() { resize(); cells = Array.from({ length: CELL_COUNT }, createCell); }
+    // Coccus — spherical bacterium, clusters of 2-4
+    class Coccus {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        this.vx = (Math.random() - 0.5) * 0.25;
+        this.vy = (Math.random() - 0.5) * 0.25;
+        this.r = Math.random() * 7 + 5;
+        this.count = Math.floor(Math.random() * 3) + 1; // 1-3 cells
+        this.alpha = Math.random() * 0.18 + 0.06;
+        this.color = Math.random() < 0.6 ? COLOR : COLOR3;
+        this.wobble = Math.random() * Math.PI * 2;
+        this.wobbleSpeed = Math.random() * 0.02 + 0.008;
+      }
+      update() {
+        this.wobble += this.wobbleSpeed;
+        this.x += this.vx + Math.sin(this.wobble * 0.5) * 0.1;
+        this.y += this.vy + Math.cos(this.wobble * 0.3) * 0.1;
+        if (this.x < -40) this.x = W + 40;
+        if (this.x > W + 40) this.x = -40;
+        if (this.y < -40) this.y = H + 40;
+        if (this.y > H + 40) this.y = -40;
+      }
+      draw() {
+        ctx.globalAlpha = this.alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 1.2;
+        // Draw cluster
+        const offsets = [
+          [0, 0],
+          [this.r * 1.8, 0],
+          [this.r * 0.9, -this.r * 1.6],
+        ];
+        for (let i = 0; i < this.count; i++) {
+          const ox = offsets[i][0], oy = offsets[i][1];
+          // Slight wobble in radius — cell membrane fluctuation
+          const rw = this.r + Math.sin(this.wobble + i) * 0.8;
+          ctx.beginPath();
+          ctx.arc(this.x + ox, this.y + oy, rw, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Vibrio — comma-shaped bacterium, corkscrews
+    class Vibrio {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 0.5 + 0.2;
+        this.size = Math.random() * 16 + 10;
+        this.rotSpeed = (Math.random() - 0.5) * 0.018;
+        this.alpha = Math.random() * 0.16 + 0.05;
+        this.color = Math.random() < 0.5 ? COLOR : COLOR2;
+        this.t = Math.random() * Math.PI * 2;
+      }
+      update() {
+        this.t += 0.04;
+        this.angle += this.rotSpeed;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        if (this.x < -50) this.x = W + 50;
+        if (this.x > W + 50) this.x = -50;
+        if (this.y < -50) this.y = H + 50;
+        if (this.y > H + 50) this.y = -50;
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.globalAlpha = this.alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 1.2;
+        // Comma / curved shape
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 0.5, -Math.PI * 0.1, Math.PI * 1.1);
+        ctx.stroke();
+        // Tail flagellum
+        ctx.beginPath();
+        ctx.moveTo(this.size * 0.45, this.size * 0.1);
+        for (let i = 0; i <= 10; i++) {
+          const fx = this.size * 0.45 + (i / 10) * this.size * 0.9;
+          const fy = Math.sin(i * 0.9 + this.t) * 3.5 + this.size * 0.1;
+          ctx.lineTo(fx, fy);
+        }
+        ctx.globalAlpha = this.alpha * 0.55;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Amoeba — irregular blob, pseudopods slowly extend and retract
+    class Amoeba {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        this.vx = (Math.random() - 0.5) * 0.15;
+        this.vy = (Math.random() - 0.5) * 0.15;
+        this.r = Math.random() * 20 + 16;
+        this.points = 9;
+        this.phases = Array.from({length: this.points}, () => Math.random() * Math.PI * 2);
+        this.speeds = Array.from({length: this.points}, () => Math.random() * 0.015 + 0.005);
+        this.alpha = Math.random() * 0.14 + 0.05;
+        this.color = COLOR3;
+      }
+      update() {
+        this.phases = this.phases.map((p, i) => p + this.speeds[i]);
+        // Drift slowly — amoeba moves by extending pseudopods
+        const leadPhase = this.phases[0];
+        this.x += Math.cos(leadPhase * 0.1) * 0.12 + this.vx * 0.3;
+        this.y += Math.sin(leadPhase * 0.1) * 0.12 + this.vy * 0.3;
+        if (this.x < -60) this.x = W + 60;
+        if (this.x > W + 60) this.x = -60;
+        if (this.y < -60) this.y = H + 60;
+        if (this.y > H + 60) this.y = -60;
+      }
+      draw() {
+        ctx.globalAlpha = this.alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let i = 0; i <= this.points; i++) {
+          const idx = i % this.points;
+          const angle = (idx / this.points) * Math.PI * 2;
+          // Pseudopod extension — sinusoidal variation in radius
+          const extension = Math.sin(this.phases[idx]) * 0.35 + 1;
+          const r = this.r * extension;
+          const px = this.x + Math.cos(angle) * r;
+          const py = this.y + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        // Nucleus — small off-center circle
+        ctx.beginPath();
+        ctx.arc(this.x + this.r * 0.15, this.y - this.r * 0.1, this.r * 0.28, 0, Math.PI * 2);
+        ctx.globalAlpha = this.alpha * 0.7;
+        ctx.stroke();
+      }
+    }
+
+    function buildOrganisms() {
+      organisms = [];
+      const area = W * H;
+      const density = area / 28000;
+      const count = Math.max(12, Math.floor(density));
+      for (let i = 0; i < count; i++) {
+        const r = Math.random();
+        if (r < 0.40) organisms.push(new Bacillus());
+        else if (r < 0.70) organisms.push(new Coccus());
+        else if (r < 0.88) organisms.push(new Vibrio());
+        else organisms.push(new Amoeba());
+      }
+    }
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      buildOrganisms();
+    }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
-      const t = Date.now() * 0.001;
-
-      cells.forEach(cell => {
-        cell.x += cell.vx;
-        cell.y += cell.vy;
-        if (cell.x < -cell.r * 2) cell.x = W + cell.r;
-        if (cell.x > W + cell.r * 2) cell.x = -cell.r;
-        if (cell.y < -cell.r * 2) cell.y = H + cell.r;
-        if (cell.y > H + cell.r * 2) cell.y = -cell.r;
-
-        const pulse = Math.sin(t * cell.pulseSpeed * 100 + cell.pulsePhase) * 0.15 + 1;
-        const r = cell.r * pulse;
-        const opacity = cell.opacity;
-
-        // Cell membrane
-        ctx.beginPath();
-        ctx.arc(cell.x, cell.y, r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(0,255,136,${opacity * 2})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Cell glow
-        const grad = ctx.createRadialGradient(cell.x, cell.y, 0, cell.x, cell.y, r);
-        grad.addColorStop(0, `rgba(0,255,136,${opacity * 0.3})`);
-        grad.addColorStop(0.6, `rgba(0,229,160,${opacity * 0.1})`);
-        grad.addColorStop(1, `rgba(0,255,136,0)`);
-        ctx.beginPath();
-        ctx.arc(cell.x, cell.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        // Nucleus
-        ctx.beginPath();
-        ctx.arc(cell.x + r * 0.1, cell.y - r * 0.05, cell.nucleusR * pulse, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(0,255,136,${opacity * 1.5})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      });
-
+      organisms.forEach(o => { o.update(); o.draw(); });
+      ctx.globalAlpha = 1;
       requestAnimationFrame(draw);
     }
 
     window.addEventListener('resize', resize);
-    init(); draw();
+    resize();
+    draw();
 
-    // Nav + reveal
     window.addEventListener('scroll', () => {
-      document.querySelector('nav').style.borderBottomColor = window.scrollY > 40 ? 'rgba(22,61,40,0.8)' : 'var(--border)';
+      document.getElementById('nav').style.borderBottomColor = window.scrollY > 40 ? 'rgba(42,0,80,.8)' : 'var(--border)';
     });
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('visible'), i * 100); observer.unobserve(e.target); } });
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('visible'), i * 100); obs.unobserve(e.target); } });
     }, { threshold: 0.08 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
   </script>
 
 </body>
