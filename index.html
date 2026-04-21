@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PTH Meridian — Post-quantum cryptographic infrastructure. Ask. Solve. Done." />
+  <title>PTH Meridian</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --void:       #040810;
+      --deep:       #070E1C;
+      --surface:    #0C1628;
+      --raised:     #111E35;
+      --border:     #1A2D50;
+      --border-hi:  #243D6E;
+      --cyan:       #00E5FF;
+      --cyan-dim:   #007A8C;
+      --cyan-glow:  rgba(0,229,255,0.12);
+      --teal:       #00BFA5;
+      --gold:       #FFB300;
+      --gold-dim:   #7A5500;
+      --text:       #D4E2F4;
+      --text-muted: #4A6490;
+      --text-dim:   #243050;
+      --font-display: 'Barlow Condensed', sans-serif;
+      --font-body:    'IBM Plex Sans', sans-serif;
+      --font-mono:    'IBM Plex Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--void);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 16px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      cursor: crosshair;
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--cyan); color: var(--void); }
+
+    /* ============================================================
+       QUANTUM FIELD CANVAS
+       ============================================================ */
+    #quantum-field {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       SCANLINES
+       ============================================================ */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* All content above canvas */
+    nav, main, footer { position: relative; z-index: 2; }
+
+    /* ============================================================
+       NAVIGATION
+       ============================================================ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      background: rgba(4,8,16,0.85);
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+    }
+
+    .nav-logo-mark {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--cyan);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan-glow), inset 0 0 12px var(--cyan-glow);
+      animation: pulse-border 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 8px var(--cyan-glow), inset 0 0 8px var(--cyan-glow); }
+      50% { box-shadow: 0 0 20px rgba(0,229,255,0.25), inset 0 0 20px rgba(0,229,255,0.1); }
+    }
+
+    .nav-logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .nav-logo-name {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .nav-logo-sub {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      color: var(--cyan-dim);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--teal);
+      letter-spacing: 0.1em;
+    }
+
+    .nav-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--teal);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--cyan); }
+
+    .nav-contact {
+      border: 1px solid var(--cyan-dim) !important;
+      padding: 0.35rem 1rem;
+      color: var(--cyan) !important;
+      transition: all 0.2s !important;
+    }
+
+    .nav-contact:hover {
+      background: var(--cyan) !important;
+      color: var(--void) !important;
+      border-color: var(--cyan) !important;
+    }
+
+    /* ============================================================
+       HERO
+       ============================================================ */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 0 6rem;
+      position: relative;
+    }
+
+    .hero-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      width: 100%;
+    }
+
+    .hero-pre {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: slideIn 0.6s ease forwards 0.3s;
+    }
+
+    .hero-pre-line {
+      width: 40px;
+      height: 1px;
+      background: var(--cyan);
+    }
+
+    .hero-pre-text {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--cyan);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 10vw, 9rem);
+      font-weight: 800;
+      line-height: 0.96;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: slideIn 0.7s ease forwards 0.5s;
+    }
+
+    .hero-title-line1 { color: var(--text); display: block; }
+    .hero-title-line2 { color: var(--text); display: block; }
+
+    .hero-title-accent {
+      display: block;
+      background: linear-gradient(135deg, var(--cyan), var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: end;
+      margin-top: 4rem;
+      opacity: 0;
+      animation: slideIn 0.7s ease forwards 0.8s;
+    }
+
+    .hero-desc {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text-muted);
+      line-height: 1.85;
+      max-width: 480px;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--cyan);
+      color: var(--void);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 0.9rem 2rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    }
+
+    .btn-primary:hover {
+      background: #fff;
+      box-shadow: 0 0 30px rgba(0,229,255,0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      padding: 0.9rem 1.5rem;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-hi);
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .hero-metric {
+      background: var(--deep);
+      padding: 1.5rem;
+      transition: background 0.2s;
+    }
+
+    .hero-metric:hover {
+      background: var(--surface);
+    }
+
+    .metric-val {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--cyan);
+      line-height: 1;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.02em;
+    }
+
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      line-height: 1.4;
+    }
+
+    /* ============================================================
+       TICKER
+       ============================================================ */
+    .ticker {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 0;
+      overflow: hidden;
+      background: var(--deep);
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 3rem;
+      animation: ticker 30s linear infinite;
+      white-space: nowrap;
+    }
+
+    .ticker-item {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .ticker-item span {
+      color: var(--cyan);
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* ============================================================
+       PRODUCTS
+       ============================================================ */
+    #products {
+      padding: 8rem 0;
+    }
+
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .section-header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2rem;
+      align-items: start;
+      margin-bottom: 5rem;
+    }
+
+    .section-number {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--text-dim);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-top: -0.25rem;
+    }
+
+    .section-meta {
+      padding-top: 0.5rem;
+    }
+
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--cyan);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.8;
+    }
+
+    /* Product list */
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .product-item {
+      background: var(--deep);
+      padding: 2.5rem 3rem;
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      gap: 2rem;
+      align-items: start;
+      transition: background 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .product-item:hover {
+      background: var(--surface);
+    }
+
+    .product-item:hover .product-arrow {
+      transform: translate(4px, -4px);
+      color: var(--cyan);
+    }
+
+    .product-num {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      padding-top: 0.35rem;
+    }
+
+    .product-body {}
+
+    .product-header {
+      display: flex;
+      align-items: baseline;
+      gap: 1.5rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .product-name {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .product-fullname {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--cyan-dim);
+      letter-spacing: 0.06em;
+    }
+
+    .product-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+
+    .product-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      background: var(--raised);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      letter-spacing: 0.06em;
+    }
+
+    .chip-accent {
+      color: var(--cyan);
+      border-color: var(--cyan-dim);
+    }
+
+    .product-arrow {
+      font-size: 1.25rem;
+      color: var(--border-hi);
+      transition: all 0.2s;
+      padding-top: 0.25rem;
+    }
+
+    /* ============================================================
+       MISSION / DARK SECTION
+       ============================================================ */
+    #mission {
+      padding: 8rem 0;
+      background: var(--deep);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mission-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .mission-left {}
+
+    .mission-statement {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .mission-statement .highlight {
+      background: linear-gradient(135deg, var(--cyan), var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .mission-body {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.85;
+      margin-bottom: 3rem;
+    }
+
+    .credo-block {
+      display: inline-flex;
+      align-items: center;
+      gap: 1.5rem;
+      border: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      background: var(--surface);
+    }
+
+    .credo-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .credo-text {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+    }
+
+    .entity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .entity-card {
+      background: var(--surface);
+      padding: 1.75rem;
+      transition: background 0.2s;
+    }
+
+    .entity-card:hover {
+      background: var(--raised);
+    }
+
+    .entity-glyph {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--gold);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .entity-glyph::before {
+      content: '//';
+      color: var(--text-dim);
+    }
+
+    .entity-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .entity-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .entity-link {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--cyan-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .entity-card:hover .entity-link {
+      color: var(--cyan);
+    }
+
+    .entity-card--soon {
+      opacity: 0.5;
+    }
+
+    .entity-card--soon .entity-glyph {
+      color: var(--text-dim) !important;
+    }
+
+    .entity-card--active .entity-glyph {
+      color: var(--teal);
+    }
+
+    /* ============================================================
+       ABOUT
+       ============================================================ */
+    #about {
+      padding: 8rem 0;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: start;
+    }
+
+    .about-text p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.9;
+      margin-bottom: 1.5rem;
+    }
+
+    .about-founder {
+      margin-top: 2.5rem;
+      padding: 1.5rem;
+      border-left: 2px solid var(--cyan);
+      background: var(--deep);
+    }
+
+    .founder-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--cyan-dim);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    .founder-name {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .founder-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .data-table {
+      border: 1px solid var(--border);
+    }
+
+    .data-row {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .data-key {
+      padding: 1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--deep);
+      border-right: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+
+    .data-val {
+      padding: 1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+    }
+
+    .data-val a {
+      color: var(--cyan);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .data-val a:hover { color: #fff; }
+
+    /* ============================================================
+       CONTACT
+       ============================================================ */
+    #contact {
+      padding: 8rem 0;
+      background: var(--deep);
+      border-top: 1px solid var(--border);
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6rem;
+      align-items: start;
+    }
+
+    .contact-links {
+      display: flex;
+      flex-direction: column;
+      margin-top: 2rem;
+    }
+
+    .contact-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      text-decoration: none;
+      transition: all 0.15s;
+      background: var(--surface);
+    }
+
+    .contact-link:last-child {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .contact-link:hover {
+      background: var(--raised);
+      border-color: var(--cyan-dim);
+    }
+
+    .contact-link:hover .cl-arrow { color: var(--cyan); }
+
+    .cl-left { display: flex; flex-direction: column; gap: 0.2rem; }
+
+    .cl-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .cl-val {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text);
+    }
+
+    .cl-arrow {
+      color: var(--border-hi);
+      font-size: 1rem;
+      transition: color 0.15s;
+    }
+
+    .collab-box {
+      margin-top: 2rem;
+      padding: 2rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      position: relative;
+    }
+
+    .collab-box::before {
+      content: 'OPEN COLLABORATION';
+      position: absolute;
+      top: -0.6rem;
+      left: 1.5rem;
+      background: var(--surface);
+      padding: 0 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--gold);
+      letter-spacing: 0.14em;
+    }
+
+    .collab-box p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    .collab-box p + p {
+      margin-top: 1rem;
+    }
+
+    /* ============================================================
+       FOOTER
+       ============================================================ */
+    footer {
+      background: var(--void);
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 0;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover { color: var(--cyan); }
+
+    .footer-credo {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+    }
+
+    /* ============================================================
+       ANIMATIONS
+       ============================================================ */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 860px) {
+      .hero-body,
+      .mission-grid,
+      .about-grid,
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+
+      .section-header {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .section-number { font-size: 3rem; }
+
+      .product-item {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 2rem;
+      }
+
+      .product-num { display: none; }
+
+      .entity-grid { grid-template-columns: 1fr; }
+
+      .nav-links { display: none; }
+
+      .data-row { grid-template-columns: 120px 1fr; }
+
+      .hero-metrics { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Quantum field canvas -->
+  <canvas id="quantum-field"></canvas>
+
+  <!-- ============================================================
+       NAVIGATION
+       ============================================================ -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-mark">PTH</div>
+        <div class="nav-logo-text">
+          <div class="nav-logo-name">PTH Meridian</div>
+          <div class="nav-logo-sub">SA'AT Cryptographics · Calgary, CA</div>
+        </div>
+      </a>
+
+      <div class="nav-status">
+        <div class="nav-status-dot"></div>
+        FIPS 203 / 204 / 205 — POST-QUANTUM READY
+      </div>
+
+      <ul class="nav-links">
+        <li><a href="#products">Stack</a></li>
+        <li><a href="#mission">Mission</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact" class="nav-contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ============================================================
+         HERO
+         ============================================================ -->
+    <section id="hero">
+      <div class="hero-container">
+
+        <div class="hero-pre">
+          <div class="hero-pre-line"></div>
+          <div class="hero-pre-text">Precision Technology Heuristics — Open Source Infrastructure</div>
+        </div>
+
+        <h1 class="hero-title">
+          <span class="hero-title-line1">Cryptographic</span>
+          <span class="hero-title-line2">infrastructure</span>
+          <span class="hero-title-accent">built to last.</span>
+        </h1>
+
+        <div class="hero-body">
+          <div>
+            <p class="hero-desc">
+              PTH Meridian builds open-source post-quantum cryptographic
+              infrastructure — engineered for the threats that exist tomorrow,
+              deployed for the systems that exist today.
+              NIST FIPS 203, 204 and 205 compliant. Independently auditable.
+            </p>
+            <div class="hero-actions">
+              <a href="#products" class="btn-primary">Explore the stack →</a>
+              <a href="https://github.com/PTHMeridian" target="_blank" class="btn-ghost">GitHub ↗</a>
+            </div>
+          </div>
+
+          <div class="hero-metrics">
+            <div class="hero-metric">
+              <div class="metric-val">ML-KEM</div>
+              <div class="metric-label">FIPS 203<br/>Key encapsulation</div>
+            </div>
+            <div class="hero-metric">
+              <div class="metric-val">ML-DSA</div>
+              <div class="metric-label">FIPS 204<br/>Digital signatures</div>
+            </div>
+            <div class="hero-metric">
+              <div class="metric-val">6</div>
+              <div class="metric-label">Trust platform<br/>phases</div>
+            </div>
+            <div class="hero-metric">
+              <div class="metric-val">ZKP</div>
+              <div class="metric-label">Zero knowledge<br/>proofs</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Ticker -->
+    <div class="ticker">
+      <div class="ticker-track">
+        <div class="ticker-item"><span>ML-KEM-768</span> FIPS 203 KEY ENCAPSULATION</div>
+        <div class="ticker-item"><span>ML-DSA-65</span> FIPS 204 DIGITAL SIGNATURES</div>
+        <div class="ticker-item"><span>SLH-DSA</span> FIPS 205 HASH-BASED SIGNATURES</div>
+        <div class="ticker-item"><span>ARGON2ID</span> MEMORY-HARD KDF</div>
+        <div class="ticker-item"><span>OCSP</span> REAL-TIME CERT REVOCATION</div>
+        <div class="ticker-item"><span>ZKP</span> RANGE + MEMBERSHIP PROOFS</div>
+        <div class="ticker-item"><span>THRESHOLD SIG</span> M-OF-N GOVERNANCE</div>
+        <div class="ticker-item"><span>HSM BRIDGE</span> HARDWARE KEY PROTECTION</div>
+        <div class="ticker-item"><span>DID</span> SELF-SOVEREIGN IDENTITY</div>
+        <div class="ticker-item"><span>SHAMIR</span> SECRET SHARING</div>
+        <!-- duplicate for seamless loop -->
+        <div class="ticker-item"><span>ML-KEM-768</span> FIPS 203 KEY ENCAPSULATION</div>
+        <div class="ticker-item"><span>ML-DSA-65</span> FIPS 204 DIGITAL SIGNATURES</div>
+        <div class="ticker-item"><span>SLH-DSA</span> FIPS 205 HASH-BASED SIGNATURES</div>
+        <div class="ticker-item"><span>ARGON2ID</span> MEMORY-HARD KDF</div>
+        <div class="ticker-item"><span>OCSP</span> REAL-TIME CERT REVOCATION</div>
+        <div class="ticker-item"><span>ZKP</span> RANGE + MEMBERSHIP PROOFS</div>
+        <div class="ticker-item"><span>THRESHOLD SIG</span> M-OF-N GOVERNANCE</div>
+        <div class="ticker-item"><span>HSM BRIDGE</span> HARDWARE KEY PROTECTION</div>
+        <div class="ticker-item"><span>DID</span> SELF-SOVEREIGN IDENTITY</div>
+        <div class="ticker-item"><span>SHAMIR</span> SECRET SHARING</div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         PRODUCTS
+         ============================================================ -->
+    <section id="products">
+      <div class="section-container">
+
+        <div class="section-header reveal">
+          <div class="section-number">01</div>
+          <div class="section-meta">
+            <div class="section-tag">SA'AT Cryptographics — Open Source</div>
+            <h2 class="section-title">The cryptographic stack</h2>
+            <p class="section-desc">Three open-source tools. One coherent platform. From raw key generation to self-sovereign identity with zero-knowledge proofs.</p>
+          </div>
+        </div>
+
+        <div class="product-list reveal">
+
+          <a href="https://github.com/PTHMeridian/AKR-KeyGen" target="_blank" class="product-item">
+            <div class="product-num">// 01</div>
+            <div class="product-body">
+              <div class="product-header">
+                <div class="product-name">AKR KeyGen</div>
+                <div class="product-fullname">ASYMMETRIC KEY RESOLVER — KEY GENERATION ENGINE</div>
+              </div>
+              <p class="product-desc">
+                Post-quantum cryptographic primitive engine implementing ML-KEM, ML-DSA and SLH-DSA.
+                NIST FIPS 203/204/205 compliant. Hybrid classical/quantum modes, REST API and
+                live developer dashboard. The foundation everything else is built on.
+              </p>
+              <div class="product-chips">
+                <span class="chip chip-accent">ML-KEM-768</span>
+                <span class="chip chip-accent">ML-DSA-65</span>
+                <span class="chip chip-accent">SLH-DSA</span>
+                <span class="chip">ECDSA P-256 / P-384</span>
+                <span class="chip">AES-256-GCM</span>
+                <span class="chip">Hybrid modes</span>
+                <span class="chip">REST API</span>
+                <span class="chip">TypeScript</span>
+              </div>
+            </div>
+            <div class="product-arrow">↗</div>
+          </a>
+
+          <a href="https://github.com/PTHMeridian/AKR-NaOS" target="_blank" class="product-item">
+            <div class="product-num">// 02</div>
+            <div class="product-body">
+              <div class="product-header">
+                <div class="product-name">AKR Naos</div>
+                <div class="product-fullname">NESTED AUTHENTICATION OPERATIONS SUITE</div>
+              </div>
+              <p class="product-desc">
+                A six-phase cryptographic trust platform with seven hardening steps.
+                Shamir Secret Sharing, Argon2id key vault, Certificate Authority with OCSP,
+                secure channel, HMIT audit engine, identity wallet and zero-knowledge proofs
+                with bounds-binding range proofs and Merkle membership proofs.
+              </p>
+              <div class="product-chips">
+                <span class="chip chip-accent">Shamir Secret Sharing</span>
+                <span class="chip chip-accent">Argon2id KDF</span>
+                <span class="chip chip-accent">ZKP v2</span>
+                <span class="chip">PKI / OCSP</span>
+                <span class="chip">HSM Bridge</span>
+                <span class="chip">Threshold Signatures</span>
+                <span class="chip">Key Attestation</span>
+                <span class="chip">DID / Wallet</span>
+              </div>
+            </div>
+            <div class="product-arrow">↗</div>
+          </a>
+
+          <a href="https://github.com/PTHMeridian/AMuN" target="_blank" class="product-item">
+            <div class="product-num">// 03</div>
+            <div class="product-body">
+              <div class="product-header">
+                <div class="product-name">AMuN</div>
+                <div class="product-fullname">APPLIED MINDSHIFT UNIVERSAL NAVIGATOR</div>
+              </div>
+              <p class="product-desc">
+                A consequence mapping tool that surfaces second and third-order effects
+                before decisions become irreversible. Helps individuals and organizations
+                navigate complexity by making the invisible visible — the downstream
+                consequences most decision-makers never see coming.
+              </p>
+              <div class="product-chips">
+                <span class="chip chip-accent">Consequence mapping</span>
+                <span class="chip">Multi-order effects</span>
+                <span class="chip">Decision clarity</span>
+                <span class="chip">Next.js</span>
+                <span class="chip">Live on GitHub</span>
+              </div>
+            </div>
+            <div class="product-arrow">↗</div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         MISSION
+         ============================================================ -->
+    <section id="mission">
+      <div class="section-container">
+
+        <div class="mission-grid">
+
+          <div class="reveal">
+            <div class="section-tag" style="margin-bottom: 2rem;">// 02 — Mission</div>
+
+            <div class="mission-statement">
+              Quantum computers will break the cryptography the world runs on.
+              <span class="highlight">We build the replacement.</span>
+            </div>
+
+            <p class="mission-body">
+              The transition to post-quantum cryptography is not optional — it is a
+              matter of when, not if. NIST has already published the standards.
+              Governments are setting 2030 mandates. Most organizations are not ready.
+              PTH Meridian exists to change that — starting with open-source infrastructure
+              that anyone can audit, deploy and build upon.
+            </p>
+
+
+          </div>
+
+          <div class="reveal">
+            <div class="section-tag" style="margin-bottom: 2rem;">// Divisions</div>
+            <div class="entity-grid">
+              <div class="entity-card entity-card--active">
+                <div class="entity-glyph">Active</div>
+                <div class="entity-name">Cryptographics</div>
+                <div class="entity-desc">Post-quantum cryptographic infrastructure. Key generation, trust platforms, zero-knowledge proofs and identity — built for the quantum era.</div>
+                <div class="entity-link">AKR KeyGen · AKR Naos →</div>
+              </div>
+              <div class="entity-card entity-card--active">
+                <div class="entity-glyph">Active</div>
+                <div class="entity-name">Bioinformatics</div>
+                <div class="entity-desc">Disease causation mapping and molecular analysis tools. Surfacing the biological signal hidden inside complex clinical and genomic data.</div>
+                <div class="entity-link">HqA · MNTU →</div>
+              </div>
+              <div class="entity-card entity-card--soon">
+                <div class="entity-glyph">Coming</div>
+                <div class="entity-name">Decision Science</div>
+                <div class="entity-desc">Consequence mapping and applied decision intelligence. Making the invisible visible before decisions become irreversible.</div>
+                <div class="entity-link">AMuN →</div>
+              </div>
+              <div class="entity-card entity-card--soon">
+                <div class="entity-glyph">Coming</div>
+                <div class="entity-name">More to come</div>
+                <div class="entity-desc">PTH Meridian is building toward a full suite of research-grade tools across security, life sciences and applied intelligence.</div>
+                <div class="entity-link">pth-meridian.io</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ABOUT
+         ============================================================ -->
+    <section id="about">
+      <div class="section-container">
+
+        <div class="section-header reveal">
+          <div class="section-number">03</div>
+          <div class="section-meta">
+            <div class="section-tag">About PTH Meridian</div>
+            <h2 class="section-title">Canadian-built.<br />Globally distributed.</h2>
+          </div>
+        </div>
+
+        <div class="about-grid">
+
+          <div class="reveal">
+            <div class="about-text">
+              <p>
+                PTH Meridian is an independent cryptographic research and development
+                studio based in Calgary, Alberta, Canada. We build open-source
+                post-quantum security infrastructure grounded in NIST FIPS 203, 204
+                and 205 — designed to be independently auditable, academically rigorous
+                and production-ready.
+              </p>
+              <p>
+                Our goal is to contribute to Canadian and international post-quantum
+                cryptographic standards — building the civilian infrastructure that
+                keeps organizations, individuals and institutions secure through the
+                quantum transition and beyond.
+              </p>
+              <p>
+                We are actively seeking academic collaboration with Canadian university
+                cryptography research groups for formal security review of our
+                zero-knowledge proof and post-quantum protocol implementations.
+              </p>
+            </div>
+
+            <div class="about-founder">
+              <div class="founder-label">Founder</div>
+              <div class="founder-name">Adel Tammam</div>
+              <div class="founder-title">Founder — PTH Meridian · Calgary, Alberta, Canada</div>
+            </div>
+          </div>
+
+          <div class="reveal">
+            <div class="data-table">
+              <div class="data-row">
+                <div class="data-key">Founded</div>
+                <div class="data-val">2026</div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">Location</div>
+                <div class="data-val">Calgary, Alberta, Canada</div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">Type</div>
+                <div class="data-val">Independent research studio</div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">Focus</div>
+                <div class="data-val">Post-quantum cryptography</div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">Standards</div>
+                <div class="data-val">NIST FIPS 203 · 204 · 205</div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">Compliance</div>
+                <div class="data-val">PIPEDA · GDPR-compatible</div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">GitHub</div>
+                <div class="data-val">
+                  <a href="https://github.com/PTHMeridian" target="_blank">github.com/PTHMeridian</a>
+                </div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">Email</div>
+                <div class="data-val">
+                  <a href="mailto:adel.tammam@pth-meridian.io">adel.tammam@pth-meridian.io</a>
+                </div>
+              </div>
+              <div class="data-row">
+                <div class="data-key">Academic</div>
+                <div class="data-val">Seeking CrySP / Waterloo collaboration</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CONTACT
+         ============================================================ -->
+    <section id="contact">
+      <div class="section-container">
+
+        <div class="section-header reveal">
+          <div class="section-number">04</div>
+          <div class="section-meta">
+            <div class="section-tag">Contact</div>
+            <h2 class="section-title">Let's build the future together.</h2>
+            <p class="section-desc">We welcome collaboration from researchers, institutions, enterprises and developers at the frontier of post-quantum security.</p>
+          </div>
+        </div>
+
+        <div class="contact-grid">
+
+          <div class="reveal">
+            <div class="contact-links">
+              <a href="mailto:adel.tammam@pth-meridian.io" class="contact-link">
+                <div class="cl-left">
+                  <span class="cl-label">Primary contact</span>
+                  <span class="cl-val">adel.tammam@pth-meridian.io</span>
+                </div>
+                <span class="cl-arrow">→</span>
+              </a>
+              <a href="https://github.com/PTHMeridian/AKR-KeyGen" target="_blank" class="contact-link">
+                <div class="cl-left">
+                  <span class="cl-label">GitHub — AKR KeyGen</span>
+                  <span class="cl-val">Post-quantum key generation engine</span>
+                </div>
+                <span class="cl-arrow">→</span>
+              </a>
+              <a href="https://github.com/PTHMeridian/AKR-NaOS" target="_blank" class="contact-link">
+                <div class="cl-left">
+                  <span class="cl-label">GitHub — AKR Naos</span>
+                  <span class="cl-val">Full cryptographic trust platform</span>
+                </div>
+                <span class="cl-arrow">→</span>
+              </a>
+              <a href="https://github.com/PTHMeridian/AMuN" target="_blank" class="contact-link">
+                <div class="cl-left">
+                  <span class="cl-label">GitHub — AMuN</span>
+                  <span class="cl-val">Consequence mapping navigator</span>
+                </div>
+                <span class="cl-arrow">→</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="reveal">
+            <div class="collab-box">
+              <p>
+                PTH Meridian is actively seeking formal security review from Canadian
+                university research groups — particularly the CrySP lab at the
+                University of Waterloo — for our zero-knowledge proof module and
+                post-quantum protocol implementations.
+              </p>
+              <p>
+                We offer authorship acknowledgment in the codebase and any resulting
+                publications in exchange for rigorous academic review. Our ZKP module
+                includes range proofs with bounds-binding (v2), Merkle membership
+                proofs, and selective disclosure presentations. A self-discovered
+                vulnerability has already been identified and patched.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-logo">PTH Meridian</div>
+        <div class="footer-copy">© 2026 Adel Tammam · Calgary, Alberta, Canada</div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="https://github.com/PTHMeridian/AKR-KeyGen" target="_blank">AKR KeyGen</a></li>
+        <li><a href="https://github.com/PTHMeridian/AKR-NaOS" target="_blank">AKR Naos</a></li>
+        <li><a href="https://github.com/PTHMeridian/AMuN" target="_blank">AMuN</a></li>
+        <li><a href="mailto:adel.tammam@pth-meridian.io">Contact</a></li>
+      </ul>
+      <div class="footer-credo">Ask. Solve. Done.</div>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT — Quantum Field + Interactions
+       ============================================================ -->
+  <script>
+    // ============================================================
+    // QUANTUM FIELD ANIMATION
+    // Floating particles connected by lines — suggests encrypted
+    // data flowing through quantum probability space
+    // ============================================================
+    const canvas = document.getElementById('quantum-field');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles, mouse = { x: -1000, y: -1000 };
+
+    const PARTICLE_COUNT = 70;
+    const MAX_DIST = 160;
+    const PARTICLE_SPEED = 0.25;
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function createParticle() {
+      return {
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * PARTICLE_SPEED,
+        vy: (Math.random() - 0.5) * PARTICLE_SPEED,
+        r: Math.random() * 1.5 + 0.5,
+        hex: Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0').toUpperCase(),
+        hexTimer: 0,
+        hexInterval: Math.random() * 200 + 100,
+      };
+    }
+
+    function init() {
+      resize();
+      particles = Array.from({ length: PARTICLE_COUNT }, createParticle);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Update and draw particles
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        // Gentle mouse attraction
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const md = Math.sqrt(dx * dx + dy * dy);
+        if (md < 200) {
+          p.vx += (dx / md) * 0.008;
+          p.vy += (dy / md) * 0.008;
+        }
+
+        // Speed limit
+        const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        if (spd > 0.8) { p.vx *= 0.98; p.vy *= 0.98; }
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Wrap
+        if (p.x < 0) p.x = W;
+        if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H;
+        if (p.y > H) p.y = 0;
+
+        // Update hex label
+        p.hexTimer++;
+        if (p.hexTimer > p.hexInterval) {
+          p.hex = Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0').toUpperCase();
+          p.hexTimer = 0;
+        }
+
+        // Draw particle
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.35)';
+        ctx.fill();
+
+        // Draw hex label on some particles
+        if (i % 4 === 0) {
+          ctx.font = '9px IBM Plex Mono, monospace';
+          ctx.fillStyle = 'rgba(0, 229, 255, 0.12)';
+          ctx.fillText('0x' + p.hex, p.x + 6, p.y + 3);
+        }
+
+        // Connect to nearby particles
+        for (let j = i + 1; j < particles.length; j++) {
+          const q = particles[j];
+          const ddx = p.x - q.x;
+          const ddy = p.y - q.y;
+          const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+
+          if (dist < MAX_DIST) {
+            const alpha = (1 - dist / MAX_DIST) * 0.15;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(0, 229, 255, ${alpha})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    init();
+    draw();
+
+    // ============================================================
+    // NAV SCROLL
+    // ============================================================
+    window.addEventListener('scroll', () => {
+      document.querySelector('nav').style.borderBottomColor =
+        window.scrollY > 40 ? 'rgba(26,45,80,0.8)' : 'var(--border)';
+    });
+
+    // ============================================================
+    // SCROLL REVEAL
+    // ============================================================
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 100);
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  </script>
+
+</body>
+</html>
