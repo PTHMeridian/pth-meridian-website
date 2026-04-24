@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AMuN — Decision Navigator · PTH Meridian</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#000;color:#D8D8E8;font-family:"IBM Plex Sans",sans-serif;font-weight:300;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;background:#111;outline:none;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:currentColor;cursor:pointer;}
+    ::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-thumb{background:#1C1C2C;}
+    svg text{user-select:none;-webkit-user-select:none;}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState } = React;
+
+// ─── DISCLAIMER — hardwired, non-negotiable ───────────────────
+const DISCLAIMER = "All likelihood estimates are expressed as RANGES only and represent structured assessments grounded in official public data from Statistics Canada, Natural Resources Canada, the Canada Energy Regulator and Hydro-Québec — not precise predictions, guarantees or professional advice of any kind. Context data reflects official sources as of 2024–2026 and is subject to change. Likelihood ranges remain qualitative judgments informed by this data. PTH Meridian does not guarantee any outcome. This tool is a thinking aid, not an oracle. No user data is collected or stored.";
+
+// ─── DESIGN TOKENS ───────────────────────────────────────────
+const C = {
+  void:"#000000", deep:"#080808", surface:"#0E0E0E",
+  border:"#1C1C1C", silver:"#C0C0D0", ice:"#E8E8FF",
+  dim:"#252530", muted:"#484858", text:"#D8D8E8",
+  green:"#4ade80", yellow:"#fbbf24", red:"#f87171",
+};
+
+// Range helpers — [low, high] e.g. [55,75]
+const mid   = r => Math.round((r[0]+r[1])/2);
+const rangeLabel = r => {
+  const m = mid(r);
+  return m>=65 ? "Favourable" : m>=40 ? "Moderate" : "Challenging";
+};
+const rangeColor = r => {
+  const m = mid(r);
+  return m>=65 ? C.green : m>=40 ? C.yellow : C.red;
+};
+const rangeStr = r => `${r[0]}–${r[1]}%`;
+
+// Qualitative label for single impact dimension score
+const impactLabel = s => s>=65?"Favourable":s>=40?"Moderate":"Challenging";
+const impactColor = s => s>=65?C.green:s>=40?C.yellow:C.red;
+
+// ─── LAYOUT CONSTANTS ─────────────────────────────────────────
+const SVG_W = 1000;
+const NW = 145, NH = 62, RW = 210, RH = 58;
+const LY  = [54, 196, 346, 498];
+const PAD = 14;
+
+// Group-clamped position calculator — no overlaps in any scenario
+function groupPos(parentX, count, preferred) {
+  const minSpan = NW + 16;
+  const maxSpan = count>1 ? (SVG_W - NW - PAD*2)/(count-1) : preferred;
+  const span    = Math.max(minSpan, Math.min(preferred, maxSpan));
+  const total   = (count-1)*span;
+  let   start   = parentX - total/2;
+  start = Math.max(NW/2+PAD, start);
+  const rightWall = SVG_W - NW/2 - PAD;
+  if (start+total > rightWall) start = rightWall - total;
+  start = Math.max(NW/2+PAD, start);
+  return Array.from({length:count}, (_,i) => start + i*span);
+}
+
+// ─── TREE DATA — ranges only, never specific percentages ──────
+const TREE = {
+  id:"root", label:"Alberta Data Centres\nEnergy & Water", type:"root",
+  children:[
+    {
+      id:"water", label:"Water &\nEnvironment", type:"decision",
+      children:[
+        { id:"cool_tech", label:"Change Cooling\nTechnology", type:"decision",
+          children:[
+            { id:"immersion", label:"Liquid\nImmersion", type:"leaf",
+              aiRange:[50,70],
+              summary:"Mandate immersion cooling — servers submerged in dielectric fluid, zero water use. Proven at scale by Microsoft, Meta and Alibaba. Estimated 20–30% capital premium, potentially offset by provincial grants. Keeps investment in Alberta.",
+              fin:[45,65], tax:[55,72], energy:[55,72], liv:[60,78],
+              gov:[42,60], priv:[40,60], env:[70,88], com:[60,80] },
+            { id:"air_cool", label:"Air Cooling\n(Cold Climate)", type:"leaf",
+              aiRange:[45,62],
+              summary:"Use Alberta's cold climate for direct air cooling — viable 7–8 months per year with no mechanical systems. Lowest capital cost of all water-free options. Modest summer energy penalty. Simplest regulatory path estimated at 12–18 months.",
+              fin:[55,73], tax:[55,73], energy:[45,65], liv:[58,76],
+              gov:[52,70], priv:[45,63], env:[62,80], com:[55,74] },
+            { id:"waste_heat", label:"Waste Heat\nRecovery", type:"leaf",
+              aiRange:[35,60],
+              summary:"Capture server waste heat for community district heating. Proven in Helsinki and Stockholm at city scale. Alberta lacks district heating infrastructure — significant retrofit required. Most viable for new communities. Estimated 5–8 year timeline.",
+              fin:[35,55], tax:[50,68], energy:[62,80], liv:[68,86],
+              gov:[20,40], priv:[30,50], env:[75,93], com:[72,90] },
+          ]},
+        { id:"relocate", label:"Relocate to\nBetter Region", type:"decision",
+          children:[
+            { id:"north_ab", label:"Northern\nAlberta", type:"leaf",
+              aiRange:[43,63],
+              summary:"Peace River or Grande Prairie — cooler climate, less water-stressed. UBC/Nature Climate Change study confirms glacier retreat will bring shortages to 1 in 4 Albertans (1M+ people), grounding the southern Alberta water risk. AESO grid infrastructure deficit remains the primary development challenge. Estimated 4–6 years from decision to operation.",
+              fin:[40,60], tax:[50,68], energy:[35,55], liv:[55,73],
+              gov:[23,43], priv:[33,53], env:[62,80], com:[55,73] },
+            { id:"quebec", label:"Quebec\nHydroelectric", type:"leaf",
+              aiRange:[63,80],
+              summary:"Official 2024 data confirms Montreal large-power electricity at 5.74¢/kWh vs Calgary at 10.46¢/kWh and Edmonton at 13.17¢/kWh (Hydro-Québec 2024 Comparison Report). Cold climate, surplus hydro capacity, and established data centre precedent already attracting major operators. Alberta political resistance is the primary implementation barrier.",
+              fin:[68,86], tax:[32,52], energy:[72,90], liv:[50,68],
+              gov:[58,76], priv:[66,84], env:[75,93], com:[53,71] },
+            { id:"manitoba", label:"Manitoba\nHydroelectric", type:"leaf",
+              aiRange:[53,72],
+              summary:"Nelson River hydro surplus, cold climate, acute northern community economic need. Greater development potential than Quebec. Thompson and The Pas regions are specifically suitable. Less established approval framework than Quebec adds estimated 6–12 months.",
+              fin:[58,76], tax:[45,63], energy:[60,78], liv:[62,80],
+              gov:[45,63], priv:[42,62], env:[73,91], com:[66,84] },
+          ]},
+        { id:"integrate", label:"Community\nIntegration", type:"decision",
+          children:[
+            { id:"fn_hybrid", label:"First Nations\nHybrid", type:"leaf",
+              aiRange:[55,75],
+              summary:"Official NRCan data confirms 280+ remote communities with ~200,000 people remain off-grid, with ~70% dependent on diesel. On-reserve households spend 3x the income share on energy vs average Canadians (confirmed data). Data centre + Indigenous-owned renewables + waste heat recovery replaces diesel entirely. Federal CERRC program has committed $453M to diesel reduction in remote communities.",
+              fin:[42,62], tax:[55,73], energy:[62,80], liv:[75,93],
+              gov:[18,38], priv:[35,55], env:[78,96], com:[84,100] },
+            { id:"north_hybrid", label:"Northern AB\nTown Model", type:"leaf",
+              aiRange:[48,68],
+              summary:"Integrated development in a northern Alberta town facing economic decline — data centre, co-located renewables and district heating. Simpler approvals than First Nations model. Provincial economic development funding available. Estimated 4–6 years.",
+              fin:[45,65], tax:[55,73], energy:[52,70], liv:[65,83],
+              gov:[28,48], priv:[40,60], env:[68,86], com:[68,86] },
+          ]},
+      ]
+    },
+    {
+      id:"energy", label:"Energy Cost\n& Grid", type:"decision",
+      children:[
+        { id:"renewable", label:"Renewable\nEnergy Pairing", type:"leaf",
+          aiRange:[45,65],
+          summary:"Require all new data centres to match with dedicated new renewable generation — solar or wind. Alberta's solar resource is world-class. Significant additional capital required. AESO interconnection queue currently estimated at 3+ years and is the primary timeline constraint.",
+          fin:[38,58], tax:[58,76], energy:[48,66], liv:[50,68],
+          gov:[32,52], priv:[42,62], env:[66,84], com:[45,63] },
+        { id:"hydro_rel", label:"Hydro Region\nRelocation", type:"leaf",
+          aiRange:[60,80],
+          summary:"Redirect investment to Quebec or Manitoba for cheapest clean baseload electricity. Market is already moving this direction voluntarily without government direction. Federal government has interest in keeping investment in Canada. Alberta political resistance requires federal facilitation.",
+          fin:[65,83], tax:[35,55], energy:[70,88], liv:[52,70],
+          gov:[55,73], priv:[64,82], env:[74,92], com:[55,73] },
+        { id:"smr", label:"Small Modular\nReactors", type:"leaf",
+          aiRange:[20,45],
+          summary:"Long-term plan: SMR installations providing 24/7 clean baseload power. First Canadian SMR (OPG Darlington) not expected operational until 2034 at earliest. Alberta currently has no nuclear regulatory framework — would require CNSC approval. Timeline completely misaligned with current data centre urgency. NRCan does not include SMR in near-term Alberta energy planning.",
+          fin:[25,45], tax:[45,63], energy:[42,60], liv:[38,56],
+          gov:[10,28], priv:[22,42], env:[55,73], com:[32,52] },
+      ]
+    },
+    {
+      id:"community", label:"Community\nBenefit", type:"decision",
+      children:[
+        { id:"indigenous", label:"Indigenous\nCommunities", type:"leaf",
+          aiRange:[55,72],
+          summary:"Direct development to First Nations communities currently dependent on diesel generators at very high per-unit energy costs. Wataynikaneyap Power provides direct Canadian precedent for Indigenous-owned utility. Strongest alignment with federal reconciliation mandate.",
+          fin:[45,65], tax:[52,70], energy:[65,83], liv:[78,96],
+          gov:[20,40], priv:[32,52], env:[76,94], com:[84,100] },
+        { id:"north_rural", label:"Northern Rural\nAlberta", type:"leaf",
+          aiRange:[47,67],
+          summary:"Target towns facing forestry and energy sector decline — High Level, Slave Lake, Manning. Stable technology employment replaces volatile resource sector jobs. Provincial Northern Development Initiative Trust funding available. Estimated 4–6 year timeline.",
+          fin:[45,65], tax:[55,73], energy:[50,68], liv:[64,82],
+          gov:[30,50], priv:[38,58], env:[66,84], com:[66,84] },
+        { id:"south_miti", label:"Southern AB\n+ Mitigations", type:"leaf",
+          aiRange:[35,53],
+          summary:"Keep development as proposed but mandate water-free cooling plus renewable matching plus community benefit agreements. Investment stays local. Adds estimated 25–40% to capital costs. Does not address long-term water system vulnerability from continued glacier retreat.",
+          fin:[38,58], tax:[62,80], energy:[45,63], liv:[48,66],
+          gov:[40,58], priv:[45,63], env:[52,70], com:[50,68] },
+      ]
+    },
+    {
+      id:"speed", label:"Speed of\nImplementation", type:"decision",
+      children:[
+        { id:"fast_track", label:"Fast Track\n1–2 Years", type:"leaf",
+          aiRange:[42,62],
+          summary:"Amend existing approvals to require only water-free cooling technology — no new site selection or environmental reviews required. Solves the most urgent water problem on the shortest realistic timeline. Does not optimise energy source, community benefit or long-term sustainability.",
+          fin:[45,65], tax:[58,76], energy:[48,66], liv:[52,70],
+          gov:[62,80], priv:[50,68], env:[55,73], com:[45,63] },
+        { id:"medium_t", label:"Medium Term\n3–5 Years", type:"leaf",
+          aiRange:[48,68],
+          summary:"Pause current approvals and conduct comprehensive site selection across all of Alberta — identifying optimal location across water, energy, climate and community criteria. Risk: investment may leave province during assessment period. Requires credible sustained political commitment.",
+          fin:[48,68], tax:[45,63], energy:[52,70], liv:[55,73],
+          gov:[35,55], priv:[35,55], env:[60,78], com:[55,73] },
+        { id:"long_t", label:"Comprehensive\n5–8 Years", type:"leaf",
+          aiRange:[50,72],
+          summary:"Full community integration strategy — data centre infrastructure, renewable energy development and community heating systems targeting communities with greatest need. Most transformative long-term outcome across all dimensions. Requires sustained political commitment across multiple government terms.",
+          fin:[42,62], tax:[52,70], energy:[62,80], liv:[72,90],
+          gov:[15,35], priv:[32,52], env:[75,93], com:[78,96] },
+      ]
+    },
+  ]
+};
+
+function findNode(id) {
+  if (id==="root") return TREE;
+  for (const l1 of TREE.children) {
+    if (l1.id===id) return l1;
+    if (l1.children) for (const l2 of l1.children) {
+      if (l2.id===id) return l2;
+      if (l2.children) for (const l3 of l2.children)
+        if (l3.id===id) return l3;
+    }
+  }
+  return null;
+}
+
+// ─── LAYOUT ENGINE ────────────────────────────────────────────
+function computeLayout(selL1, selL2) {
+  const nodes=[], edges=[];
+
+  nodes.push({id:"root", x:SVG_W/2, y:LY[0], w:RW, h:RH, level:0, type:"root", label:"Alberta Data Centres\nEnergy & Water"});
+
+  const l1Xs = groupPos(SVG_W/2, TREE.children.length, SVG_W/TREE.children.length);
+  TREE.children.forEach((n,i)=>{
+    const x=l1Xs[i];
+    nodes.push({id:n.id, x, y:LY[1], w:NW, h:NH, level:1, type:n.type, label:n.label});
+    edges.push({from:"root",to:n.id, fx:SVG_W/2,fy:LY[0]+RH/2, tx:x,ty:LY[1]-NH/2});
+  });
+
+  if (selL1) {
+    const l1n=TREE.children.find(n=>n.id===selL1);
+    const l1p=nodes.find(n=>n.id===selL1);
+    if (l1n?.children) {
+      const xs=groupPos(l1p.x, l1n.children.length, 215);
+      l1n.children.forEach((n,i)=>{
+        const x=xs[i];
+        nodes.push({id:n.id, x, y:LY[2], w:NW, h:NH, level:2, type:n.type, label:n.label, aiRange:n.aiRange});
+        edges.push({from:selL1,to:n.id, fx:l1p.x,fy:LY[1]+NH/2, tx:x,ty:LY[2]-NH/2});
+      });
+    }
+  }
+
+  if (selL1&&selL2) {
+    const l1n=TREE.children.find(n=>n.id===selL1);
+    const l2n=l1n?.children?.find(n=>n.id===selL2);
+    const l2p=nodes.find(n=>n.id===selL2);
+    if (l2n?.children&&l2p) {
+      const xs=groupPos(l2p.x, l2n.children.length, 195);
+      l2n.children.forEach((n,i)=>{
+        const x=xs[i];
+        nodes.push({id:n.id, x, y:LY[3], w:NW, h:NH, level:3, type:n.type, label:n.label, aiRange:n.aiRange});
+        edges.push({from:selL2,to:n.id, fx:l2p.x,fy:LY[2]+NH/2, tx:x,ty:LY[3]-NH/2});
+      });
+    }
+  }
+
+  return {nodes,edges};
+}
+
+function svgHeight(selL1, selL2) {
+  if (!selL1) return LY[1]+NH/2+44;
+  const l1=TREE.children.find(n=>n.id===selL1);
+  if (!l1?.children) return LY[1]+NH/2+44;
+  const hasL3=selL2&&l1.children.find(n=>n.id===selL2)?.children?.length>0;
+  return hasL3?LY[3]+NH/2+44:LY[2]+NH/2+44;
+}
+
+// ─── SVG COMPONENTS ──────────────────────────────────────────
+function Edge({fx,fy,tx,ty,active}) {
+  const my=(fy+ty)/2;
+  const d=`M${fx},${fy} C${fx},${my} ${tx},${my} ${tx},${ty}`;
+  return <path d={d} fill="none" stroke={active?"#707088":"#0E0E1A"} strokeWidth={active?1.6:0.7} style={{transition:"all 0.3s"}}/>;
+}
+
+function TreeNode({id,x,y,w,h,level,type,label,aiRange,selected,onPath,onClick}) {
+  const [hov,setHov]=useState(false);
+  const isRoot=type==="root", isLeaf=type==="leaf";
+  const rc=aiRange?rangeColor(aiRange):null;
+  const rx=isRoot?16:isLeaf?12:8;
+
+  let stroke=C.dim, fill=C.deep, tc=C.muted;
+  if (isRoot)        {stroke=C.silver; fill="#09091A"; tc=C.ice;}
+  else if (selected) {stroke=rc||C.ice; fill=rc?`${rc}12`:"#0C0C1C"; tc=rc||C.ice;}
+  else if (onPath)   {stroke=rc?`${rc}80`:C.silver; fill="#09090F"; tc=rc?`${rc}BB`:C.silver;}
+  else if (hov)      {stroke="#404055"; fill="#0C0C14"; tc="#8888A0";}
+
+  const lines=label.split("\n");
+  const lineH=isRoot?13.5:12.5;
+  const ty0=y-((lines.length-1)*lineH)/2+(isRoot?4:3);
+
+  return (
+    <g style={{cursor:"pointer"}} onClick={()=>onClick(id)}
+       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}>
+      {(selected||onPath)&&(
+        <rect x={x-w/2-7} y={y-h/2-7} width={w+14} height={h+14} rx={rx+7}
+          fill="none" stroke={rc||C.silver} strokeWidth={0.5} opacity={0.13}/>
+      )}
+      <rect x={x-w/2} y={y-h/2} width={w} height={h} rx={rx}
+        fill={fill} stroke={stroke} strokeWidth={selected?1.7:hov?1.0:0.75}
+        style={{transition:"all 0.2s"}}/>
+
+      {/* Range badge on leaf nodes — NO specific percentage */}
+      {isLeaf&&aiRange&&(
+        <g>
+          <rect x={x-w/2} y={y-h/2-20} width={w} height={20} rx={5}
+            fill={`${rc}10`} stroke={`${rc}40`} strokeWidth={0.7}/>
+          <text x={x} y={y-h/2-6} textAnchor="middle"
+            fill={rc} fontSize={8.5} fontFamily="IBM Plex Mono,monospace" fontWeight="600">
+            {rangeStr(aiRange)} est. · {rangeLabel(aiRange)}
+          </text>
+        </g>
+      )}
+
+      {isRoot&&(
+        <text x={x} y={y-h/2+9} textAnchor="middle" fill="#222235"
+          fontSize={6.5} fontFamily="IBM Plex Mono,monospace" letterSpacing={1.5}>
+          DECISION ROOT
+        </text>
+      )}
+      {lines.map((line,i)=>(
+        <text key={i} x={x} y={ty0+i*lineH} textAnchor="middle" fill={tc}
+          fontSize={isRoot?13:11.5} fontFamily="Barlow Condensed,sans-serif"
+          fontWeight={isRoot?800:(selected||onPath)?700:600}
+          letterSpacing={0.5} style={{transition:"fill 0.2s"}}>
+          {line.toUpperCase()}
+        </text>
+      ))}
+      {!isLeaf&&!isRoot&&(
+        <text x={x} y={y+h/2-6} textAnchor="middle"
+          fill={onPath||selected?stroke:"#18181E"}
+          fontSize={7} fontFamily="IBM Plex Mono,monospace">▼</text>
+      )}
+    </g>
+  );
+}
+
+// ─── IMPACT BAR — qualitative label, no specific number ───────
+function ImpactBar({label, range}) {
+  const m=mid(range);
+  const c=impactColor(m);
+  const l=impactLabel(m);
+  return (
+    <div style={{marginBottom:"8px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:"3px"}}>
+        <span style={{fontSize:"10px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>{label}</span>
+        <span style={{fontSize:"9.5px",fontFamily:"IBM Plex Mono,monospace",color:c,fontWeight:600}}>
+          {rangeStr(range)} · {l}
+        </span>
+      </div>
+      {/* Bar shows the range band, not a specific value */}
+      <div style={{height:"5px",background:"#0A0A0A",borderRadius:"3px",position:"relative",overflow:"hidden"}}>
+        {/* Low end filler */}
+        <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${range[0]}%`,background:"#111"}}/>
+        {/* Range band */}
+        <div style={{
+          position:"absolute", top:0, bottom:0,
+          left:`${range[0]}%`, width:`${range[1]-range[0]}%`,
+          background:c, opacity:0.7,
+          boxShadow:`0 0 5px ${c}40`,
+          transition:"all 0.6s ease"
+        }}/>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:"7.5px",color:"#1A1A28",fontFamily:"IBM Plex Mono,monospace",marginTop:"2px"}}>
+        <span>0%</span><span>50%</span><span>100%</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── DETAIL PANEL ────────────────────────────────────────────
+function Detail({node, human, setHuman}) {
+  if (!node) return null;
+  const m=mid(node.aiRange);
+  const diff=Math.abs(human-m);
+  const ac=diff<=12?C.green:diff<=28?C.yellow:C.red;
+  const al=diff<=12?"Your estimate aligns with AI range":diff<=28?"Your estimate diverges moderately":"Your estimate diverges significantly";
+
+  return (
+    <div style={{marginTop:"18px",background:C.deep,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"22px",animation:"fadeIn 0.3s ease"}}>
+
+      {/* Header */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"14px",marginBottom:"13px"}}>
+        <div>
+          <div style={{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:"5px"}}>
+            // SELECTED OUTCOME
+          </div>
+          <h3 style={{fontFamily:"Barlow Condensed,sans-serif",fontSize:"1.6rem",fontWeight:800,color:C.ice,textTransform:"uppercase",letterSpacing:"0.04em",margin:0,lineHeight:1.15}}>
+            {node.label.replace("\n"," ")}
+          </h3>
+        </div>
+
+        {/* AI range badge */}
+        <div style={{flexShrink:0,background:`${rangeColor(node.aiRange)}10`,border:`1px solid ${rangeColor(node.aiRange)}35`,borderRadius:"6px",padding:"10px 16px",textAlign:"center",minWidth:"100px"}}>
+          <div style={{fontSize:"7.5px",color:rangeColor(node.aiRange),fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.1em",marginBottom:"3px"}}>
+            ESTIMATED RANGE
+          </div>
+          <div style={{fontSize:"1.5rem",fontFamily:"Barlow Condensed,sans-serif",fontWeight:800,color:rangeColor(node.aiRange),lineHeight:1}}>
+            {rangeStr(node.aiRange)}
+          </div>
+          <div style={{fontSize:"9px",color:rangeColor(node.aiRange),fontFamily:"Barlow Condensed,sans-serif",fontWeight:700,marginTop:"2px"}}>
+            {rangeLabel(node.aiRange)}
+          </div>
+        </div>
+      </div>
+
+      {/* Range bar for AI estimate */}
+      <div style={{background:"#060606",border:`1px solid ${C.border}`,borderRadius:"5px",padding:"10px 14px",marginBottom:"16px"}}>
+        <div style={{fontSize:"8px",color:"#383840",fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"6px"}}>
+          // AI LIKELIHOOD ESTIMATE RANGE — based on available research
+        </div>
+        <div style={{height:"8px",background:"#0C0C0C",borderRadius:"4px",position:"relative",overflow:"hidden",marginBottom:"4px"}}>
+          <div style={{position:"absolute",top:0,bottom:0,left:`${node.aiRange[0]}%`,width:`${node.aiRange[1]-node.aiRange[0]}%`,
+            background:`linear-gradient(to right,${rangeColor(node.aiRange)}60,${rangeColor(node.aiRange)})`,
+            boxShadow:`0 0 8px ${rangeColor(node.aiRange)}40`,transition:"all 0.6s ease"}}/>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:"8px",color:"#252530",fontFamily:"IBM Plex Mono,monospace"}}>
+          <span>Less likely →</span>
+          <span style={{color:rangeColor(node.aiRange)}}>{node.aiRange[0]}% — {node.aiRange[1]}%</span>
+          <span>← More likely</span>
+        </div>
+      </div>
+
+      <p style={{fontSize:"12px",color:C.muted,lineHeight:1.78,marginBottom:"18px"}}>{node.summary}</p>
+
+      {/* Two-column */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"24px"}}>
+
+        {/* Impact dimensions */}
+        <div>
+          <div style={{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"11px"}}>
+            // IMPACT DIMENSIONS — estimated ranges
+          </div>
+          <ImpactBar label="Financial Cost"      range={node.fin}/>
+          <ImpactBar label="Tax Impact"          range={node.tax}/>
+          <ImpactBar label="Energy Prices"       range={node.energy}/>
+          <ImpactBar label="Standard of Living"  range={node.liv}/>
+          <ImpactBar label="Gov. Timeline"       range={node.gov}/>
+          <ImpactBar label="Private Sector"      range={node.priv}/>
+          <ImpactBar label="Environmental"       range={node.env}/>
+          <ImpactBar label="Community Benefit"   range={node.com}/>
+        </div>
+
+        {/* Human assessment */}
+        <div>
+          <div style={{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"11px"}}>
+            // YOUR ASSESSMENT
+          </div>
+
+          <div style={{background:"#060606",border:`1px solid ${C.border}`,borderRadius:"6px",padding:"14px",marginBottom:"14px"}}>
+            <div style={{fontSize:"8px",color:"#303040",fontFamily:"IBM Plex Mono,monospace",marginBottom:"8px",letterSpacing:"0.06em"}}>
+              Set your own likelihood estimate and compare with the AI range
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"8px"}}>
+              <span style={{fontSize:"9.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>YOUR ESTIMATE</span>
+              <span style={{fontSize:"1.4rem",fontFamily:"Barlow Condensed,sans-serif",fontWeight:800,
+                color:human>=65?C.green:human>=40?C.yellow:C.red,lineHeight:1}}>
+                {human}%
+              </span>
+            </div>
+            <input type="range" min="0" max="100" value={human}
+              onChange={e=>setHuman(Number(e.target.value))}
+              style={{width:"100%",accentColor:human>=65?C.green:human>=40?C.yellow:C.red,cursor:"pointer",marginBottom:"10px"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:"8px",color:"#1C1C28",fontFamily:"IBM Plex Mono,monospace",marginBottom:"12px"}}>
+              <span>Less likely</span><span>More likely</span>
+            </div>
+            <div style={{background:`${ac}08`,border:`1px solid ${ac}25`,borderRadius:"4px",padding:"8px 10px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"3px"}}>
+                <div style={{width:"6px",height:"6px",borderRadius:"50%",background:ac,flexShrink:0}}/>
+                <span style={{fontSize:"9.5px",color:ac,fontFamily:"IBM Plex Mono,monospace"}}>{al}</span>
+              </div>
+              <span style={{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>
+                AI range: {rangeStr(node.aiRange)} · Your estimate: {human}%
+              </span>
+            </div>
+          </div>
+
+          {/* Scale */}
+          <div>
+            <div style={{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"8px"}}>
+              // LIKELIHOOD SCALE
+            </div>
+            {[[C.green,"≥65% range — Favourable"],[C.yellow,"40–64% range — Moderate"],[C.red,"<40% range — Challenging"]].map(([c,l])=>(
+              <div key={l} style={{display:"flex",alignItems:"center",gap:"7px",marginBottom:"6px"}}>
+                <div style={{width:"22px",height:"4px",borderRadius:"2px",background:c,flexShrink:0}}/>
+                <span style={{fontSize:"9px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>{l}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{marginTop:"12px",fontSize:"8px",color:"#141420",fontFamily:"IBM Plex Mono,monospace",lineHeight:1.65,background:"#060606",border:`1px solid ${C.border}`,borderRadius:"4px",padding:"10px"}}>
+            <span style={{color:"#28280A"}}>⚠ </span>
+            Ranges represent estimated likelihood based on available research — not actuarial calculations. All estimates subject to change. Not professional advice.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN ────────────────────────────────────────────────────
+function AMuNTree() {
+  const [selL1,   setSelL1]   = useState(null);
+  const [selL2,   setSelL2]   = useState(null);
+  const [selLeaf, setSelLeaf] = useState(null);
+  const [human,   setHuman]   = useState(50);
+  const [discOpen,setDiscOpen]= useState(false);
+
+  const {nodes,edges} = computeLayout(selL1,selL2);
+  const h = svgHeight(selL1,selL2);
+  const pathSet = new Set(["root",...[selL1,selL2,selLeaf].filter(Boolean)]);
+
+  function handleClick(id) {
+    const nd=nodes.find(n=>n.id===id);
+    if (!nd) return;
+    if (id==="root") {setSelL1(null);setSelL2(null);setSelLeaf(null);setHuman(50);return;}
+    if (nd.level===1) {setSelL1(selL1===id?null:id);setSelL2(null);setSelLeaf(null);setHuman(50);return;}
+    if (nd.level===2) {
+      const fn=findNode(id);
+      if (fn?.type==="leaf") {setSelLeaf(id);setHuman(50);return;}
+      setSelL2(selL2===id?null:id);setSelLeaf(null);setHuman(50);return;
+    }
+    if (nd.level===3) {setSelLeaf(id);setHuman(50);}
+  }
+
+  const leafData=selLeaf?findNode(selLeaf):null;
+
+  return (
+    <div style={{background:C.void,minHeight:"100vh",color:C.text,fontFamily:"IBM Plex Sans,sans-serif",fontWeight:300}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+        *{box-sizing:border-box;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+        input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;background:#111;outline:none;}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:currentColor;cursor:pointer;}
+        ::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-thumb{background:#1C1C2C;}
+        svg text{user-select:none;-webkit-user-select:none;}
+      `}</style>
+
+      {/* Header */}
+      <div style={{position:"sticky",top:0,zIndex:100,background:"rgba(0,0,0,0.96)",borderBottom:`1px solid ${C.border}`,backdropFilter:"blur(20px)"}}>
+        <div style={{maxWidth:"1060px",margin:"0 auto",padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"8px",flexWrap:"wrap"}}>
+          <div>
+            <span style={{fontFamily:"Barlow Condensed,sans-serif",fontSize:"1.2rem",fontWeight:800,color:C.text,textTransform:"uppercase",letterSpacing:"0.1em"}}>AMuN</span>
+            <span style={{fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#252535",letterSpacing:"0.12em",textTransform:"uppercase",marginLeft:"10px"}}>Decision Navigator · PTH Meridian</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+            <span style={{fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#1E1E2E"}}>Alberta · Energy + Data Centres · 2026</span>
+            {selL1&&(
+              <button onClick={()=>{setSelL1(null);setSelL2(null);setSelLeaf(null);setHuman(50);}}
+                style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",padding:"3px 8px",cursor:"pointer",letterSpacing:"0.1em",borderRadius:"3px"}}>
+                RESTART
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:"1060px",margin:"0 auto",padding:"16px 16px 44px"}}>
+
+        {/* Disclaimer */}
+        <div style={{background:"rgba(251,191,36,0.03)",border:"1px solid rgba(251,191,36,0.15)",borderRadius:"4px",padding:"9px 13px",marginBottom:"14px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"10px"}}>
+          <div style={{fontSize:"9px",fontFamily:"IBM Plex Mono,monospace",color:"#35350A",lineHeight:1.6}}>
+            <span style={{color:C.yellow,fontWeight:600}}>⚠ RANGES ONLY — grounded in official StatsCan & NRCan data · </span>
+            {discOpen?DISCLAIMER:DISCLAIMER.slice(0,100)+"…"}
+          </div>
+          <button onClick={()=>setDiscOpen(v=>!v)} style={{background:"none",border:"1px solid rgba(251,191,36,0.18)",color:C.yellow,padding:"2px 7px",cursor:"pointer",fontFamily:"IBM Plex Mono,monospace",fontSize:"7.5px",whiteSpace:"nowrap",borderRadius:"2px",flexShrink:0}}>
+            {discOpen?"HIDE":"MORE"}
+          </button>
+        </div>
+
+        {/* Instruction */}
+        <div style={{textAlign:"center",fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#181828",letterSpacing:"0.08em",marginBottom:"12px"}}>
+          Click any node to expand its branch · Ranges are estimates grounded in StatsCan, NRCan and CER public data — not precise predictions
+        </div>
+
+        {/* Tree */}
+        <div style={{background:C.deep,border:`1px solid ${C.border}`,borderRadius:"8px",overflow:"auto"}}>
+          <svg width={SVG_W} height={h} viewBox={`0 0 ${SVG_W} ${h}`}
+            style={{display:"block",width:"100%",minWidth:"620px"}}>
+            {[0,1,2,3].filter(lv=>nodes.some(n=>n.level===lv)).map(lv=>(
+              <line key={lv} x1={30} y1={LY[lv]} x2={SVG_W-30} y2={LY[lv]}
+                stroke="#0A0A14" strokeWidth={1} strokeDasharray="3 16"/>
+            ))}
+            {edges.map((e,i)=>(
+              <Edge key={i} fx={e.fx} fy={e.fy} tx={e.tx} ty={e.ty}
+                active={pathSet.has(e.from)&&pathSet.has(e.to)}/>
+            ))}
+            {nodes.map(n=>(
+              <TreeNode key={n.id} {...n}
+                selected={n.id===selL1||n.id===selL2||n.id===selLeaf}
+                onPath={pathSet.has(n.id)}
+                onClick={handleClick}/>
+            ))}
+            {[["ROOT",0],["PRIMARY CONCERN",1],selL1?["APPROACH",2]:null,selL2?["SPECIFIC OPTION",3]:null]
+              .filter(Boolean).map(([lbl,lv])=>(
+              <text key={lbl} x={22} y={LY[lv]-NH/2-12} fill="#121220"
+                fontSize={6.5} fontFamily="IBM Plex Mono,monospace" letterSpacing={1.2}>{lbl}</text>
+            ))}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div style={{display:"flex",gap:"20px",flexWrap:"wrap",justifyContent:"center",marginTop:"10px"}}>
+          {[[C.green,"≥65% range — Favourable"],[C.yellow,"40–64% range — Moderate"],[C.red,"<40% range — Challenging"]].map(([c,l])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:"5px"}}>
+              <div style={{width:"14px",height:"4px",borderRadius:"2px",background:c}}/>
+              <span style={{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>{l}</span>
+            </div>
+          ))}
+        </div>
+
+        {selL1&&!selLeaf&&(
+          <div style={{marginTop:"10px",textAlign:"center",fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#181828",letterSpacing:"0.08em"}}>
+            ↑ Select a node to continue down the tree
+          </div>
+        )}
+
+        {leafData&&<Detail node={leafData} human={human} setHuman={setHuman}/>}
+
+        {/* Footer disclaimer */}
+        <div style={{marginTop:"28px",fontFamily:"IBM Plex Mono,monospace",fontSize:"7.5px",color:"#0C0C1A",lineHeight:1.7,textAlign:"center"}}>
+          Likelihood estimates are expressed as ranges only — grounded in Statistics Canada, NRCan, CER and Hydro-Québec public data.
+          Not actuarial calculations, precise predictions or professional advice. Context data current as of 2024–2026 and subject to change.
+          No user data collected or stored. © 2026 PTH Meridian · adel.tammam@pth-meridian.io
+        </div>
+      </div>
+    </div>
+  );
+}
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(React.createElement(AMuNTree));
+  </script>
+</body>
+</html>

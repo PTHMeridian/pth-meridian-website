@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="PTH Meridian Decisions — AMuN consequence mapping. Make the invisible visible. Navigate complex decisions by surfacing what you cannot see." />
+  <meta name="description" content="PTH Meridian Decisions — AMuN consequence mapping and interactive decision navigator. Make the invisible visible." />
   <title>Decisions — PTH Meridian</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,7 +39,7 @@
     nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); }
     .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
     .nav-logo { display: flex; align-items: center; gap: 1rem; text-decoration: none; }
-    .nav-logo-mark { width: 32px; height: 32px; border: 1px solid var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); animation: pulse-border 3s ease-in-out infinite; }
+    .nav-logo-mark { width: 32px; height: 32px; border: 1px solid var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); animation: pulse-border 3s ease-in-out infinite; }
     @keyframes pulse-border { 0%,100%{box-shadow:0 0 6px var(--accent-glow);}50%{box-shadow:0 0 16px rgba(192,192,220,0.15);} }
     .nav-logo-text { display: flex; flex-direction: column; gap: 1px; }
     .nav-logo-name { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; }
@@ -60,17 +60,76 @@
     .hero-pre-line { width: 40px; height: 1px; background: var(--accent); }
     .hero-pre-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; }
     .hero-title { font-family: var(--font-display); font-size: clamp(3.5rem, 10vw, 9rem); font-weight: 800; line-height: 0.96; letter-spacing: 0.01em; text-transform: uppercase; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 0.7s ease forwards 0.5s; }
-    .hero-title .t1 { display: block; color: var(--text); }
-    .hero-title .t2 { display: block; background: linear-gradient(135deg, var(--accent2), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .t1 { display: block; color: var(--text); }
+    .t2 { display: block; background: linear-gradient(135deg, var(--accent2), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .hero-desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.85; max-width: 600px; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 0.7s ease forwards 0.8s; }
     .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s ease forwards 1s; }
-    .btn-primary { display: inline-flex; align-items: center; gap: 0.6rem; background: var(--accent); color: var(--void); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; padding: 0.9rem 2rem; text-decoration: none; transition: all 0.2s; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.6rem; background: var(--accent); color: var(--void); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; padding: 0.9rem 2rem; text-decoration: none; transition: all 0.2s; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); cursor: pointer; border: none; }
     .btn-primary:hover { background: #fff; box-shadow: 0 0 30px rgba(192,192,220,0.3); transform: translateY(-2px); }
     .btn-ghost { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; padding: 0.9rem 1.5rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.2s; }
     .btn-ghost:hover { color: var(--text); border-color: var(--border-hi); }
 
+    /* ─── AMUN DROPDOWN ─────────────────────────────── */
+    #amun-section { padding: 0 0 2rem; }
+    .amun-toggle {
+      width: 100%;
+      background: var(--deep);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem 2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .amun-toggle:hover { border-color: var(--accent-dim); background: var(--surface); }
+    .amun-toggle.open { border-color: var(--accent-dim); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .amun-toggle-left { display: flex; flex-direction: column; gap: 0.35rem; }
+    .amun-toggle-tag { font-family: var(--font-mono); font-size: 0.62rem; color: var(--accent); letter-spacing: 0.16em; text-transform: uppercase; }
+    .amun-toggle-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 0.04em; line-height: 1; }
+    .amun-toggle-desc { font-size: 0.82rem; color: var(--text-muted); max-width: 560px; line-height: 1.55; }
+    .amun-toggle-right { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+    .amun-badge { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent3); border: 1px solid var(--border); padding: 0.25rem 0.65rem; letter-spacing: 0.08em; white-space: nowrap; }
+    .amun-chevron { font-size: 1.2rem; color: var(--accent-dim); transition: transform 0.3s ease; }
+    .amun-toggle.open .amun-chevron { transform: rotate(180deg); color: var(--accent); }
+
+    .amun-panel {
+      display: none;
+      border: 1px solid var(--accent-dim);
+      border-top: none;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+      overflow: hidden;
+      background: var(--void);
+    }
+    .amun-panel.open { display: block; animation: dropDown 0.35s ease; }
+    @keyframes dropDown { from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);} }
+
+    .amun-disclaimer-strip {
+      background: rgba(251,191,36,0.04);
+      border-bottom: 1px solid rgba(251,191,36,0.15);
+      padding: 8px 20px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: #35350A;
+      line-height: 1.6;
+    }
+    .amun-disclaimer-strip span { color: #fbbf24; font-weight: 600; }
+
+    .amun-frame-wrap { position: relative; width: 100%; }
+    .amun-frame-wrap iframe {
+      width: 100%;
+      height: 820px;
+      border: none;
+      display: block;
+      background: #000;
+    }
+
     /* CONSEQUENCE DEMO */
-    .consequence-box { border: 1px solid var(--border); background: var(--deep); padding: 0; margin-top: 3rem; }
+    .consequence-box { border: 1px solid var(--border); background: var(--deep); margin-top: 3rem; }
     .cbox-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--accent-dim); letter-spacing: 0.14em; text-transform: uppercase; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
     .c-node { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); transition: background 0.2s; }
     .c-node:last-child { border-bottom: none; }
@@ -81,15 +140,15 @@
     .c-arrow { padding: 0.2rem 1.5rem; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-dim); }
 
     /* SECTIONS */
-    section { padding: 7rem 0; }
+    section { padding: 6rem 0; }
     .section-header { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start; margin-bottom: 4rem; }
     .section-number { font-family: var(--font-display); font-size: 4rem; font-weight: 800; color: var(--text-dim); line-height: 1; letter-spacing: -0.04em; }
     .section-tag { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.75rem; }
     .section-title { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 700; color: var(--text); line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 1rem; }
     .section-desc { font-size: 0.95rem; color: var(--text-muted); max-width: 520px; line-height: 1.8; }
 
-    /* AMUN */
-    #amun { background: rgba(8,8,8,0.8); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    /* AMUN FEATURES */
+    #amun-about { background: rgba(8,8,8,0.8); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
     .amun-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
     .amun-statement { font-family: var(--font-display); font-size: clamp(1.75rem,3vw,2.5rem); font-weight: 700; line-height: 1.2; color: var(--text); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 1.5rem; }
     .amun-statement .hl { background: linear-gradient(135deg, var(--accent2), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -152,6 +211,8 @@
       .section-number { font-size:3rem; }
       .nav-links { display:none; }
       .contact-strip-inner { flex-direction:column; }
+      .amun-frame-wrap iframe { height: 600px; }
+      .amun-toggle { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -189,39 +250,66 @@
           <span class="t1">Decisions have</span>
           <span class="t2">consequences.</span>
         </h1>
-        <p class="hero-desc">Most decisions look simple until the consequences arrive. AMuN — Applied Mindshift Universal Navigator — maps the second and third order consequences of any decision before you make it. See what you cannot see until it is too late to change.</p>
+        <p class="hero-desc">Most decisions look simple until the consequences arrive. AMuN maps the second and third order consequences of any decision before you make it — surfacing what you cannot see until it is too late to change.</p>
         <div class="hero-actions">
-          <a href="https://github.com/PTHMeridian/AMuN" target="_blank" class="btn-primary">AMuN on GitHub →</a>
-          <a href="index.html" class="btn-ghost">PTH Meridian ↗</a>
+          <button class="btn-primary" onclick="openAMuN()">Launch AMuN Navigator ↓</button>
+          <a href="https://github.com/PTHMeridian/AMuN" target="_blank" class="btn-ghost">GitHub ↗</a>
         </div>
+
         <!-- Live consequence chain example -->
         <div class="consequence-box reveal">
-          <div class="cbox-label">// Consequence chain — Alberta data center water problem</div>
+          <div class="cbox-label">// Consequence chain — Alberta data centre water problem</div>
           <div class="c-node c-root">
             <div class="c-node-order">Decision</div>
-            <div class="c-node-text">Build hyperscale data centers in water-stressed southern Alberta</div>
+            <div class="c-node-text">Build hyperscale data centres in water-stressed southern Alberta</div>
           </div>
           <div class="c-arrow">↓</div>
           <div class="c-node">
             <div class="c-node-order">1st order — direct</div>
-            <div class="c-node-text">2 million gallons per day drawn from already over-allocated river systems fed by receding glaciers</div>
+            <div class="c-node-text">Millions of gallons per day drawn from already over-allocated river systems fed by glaciers that have lost ~70% of their volume since 1900 (NRCan data)</div>
           </div>
           <div class="c-arrow">↓</div>
           <div class="c-node">
             <div class="c-node-order">2nd order — consequence of consequence</div>
-            <div class="c-node-text">Agricultural water allocation reduced — crop yields fall in drought years — food production affected across the region</div>
+            <div class="c-node-text">Agricultural water allocation reduced — crop yields fall in drought years — UBC study confirms glacier retreat will affect 1 in 4 Albertans' water supply</div>
           </div>
           <div class="c-arrow">↓</div>
           <div class="c-node">
             <div class="c-node-order">3rd order — the surprise</div>
-            <div class="c-node-text">Food prices rise — rural communities stressed economically — political pressure mounts — project approval reversed after billions already invested</div>
+            <div class="c-node-text">Food prices rise — rural communities stressed — political pressure mounts — project approval reversed after billions already invested</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- AMUN -->
-    <section id="amun">
+    <!-- AMuN DROPDOWN -->
+    <section id="amun-section">
+      <div class="container">
+        <button class="amun-toggle" id="amun-toggle" onclick="toggleAMuN()">
+          <div class="amun-toggle-left">
+            <div class="amun-toggle-tag">// Interactive Decision Navigator — Alberta Energy + Data Centres</div>
+            <div class="amun-toggle-title">AMuN — Decision Tree</div>
+            <div class="amun-toggle-desc">Navigate the Alberta data centre energy and water challenge through an interactive decision tree. Compare your own likelihood estimates with AI-generated research ranges grounded in Statistics Canada, NRCan and official public data.</div>
+          </div>
+          <div class="amun-toggle-right">
+            <span class="amun-badge">Estimated ranges only · Not professional advice</span>
+            <span class="amun-chevron">▼</span>
+          </div>
+        </button>
+        <div class="amun-panel" id="amun-panel">
+          <div class="amun-disclaimer-strip">
+            <span>⚠ RESEARCH TOOL · </span>
+            All likelihood estimates in this tool are expressed as ranges only and represent structured assessments grounded in publicly available official data — not precise predictions, guarantees or professional advice of any kind. Statistics Canada, Natural Resources Canada and Canada Energy Regulator public records inform the context. Ranges are qualitative judgments, not actuarial calculations. Data subject to change. PTH Meridian does not guarantee any outcome.
+          </div>
+          <div class="amun-frame-wrap">
+            <iframe id="amun-frame" src="" title="AMuN Decision Navigator" loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AMUN ABOUT -->
+    <section id="amun-about">
       <div class="container">
         <div class="amun-grid">
           <div class="reveal">
@@ -237,7 +325,7 @@
               <div class="feature-item"><div class="feature-icon">→</div><div><div class="feature-name">Consequence Chain Mapping</div><div class="feature-desc">Trace ripple effects across time and systems. First, second and third order effects before they become irreversible.</div></div></div>
               <div class="feature-item"><div class="feature-icon">⊕</div><div><div class="feature-name">Multi-Order Effects</div><div class="feature-desc">Most tools show what happens next. AMuN shows what happens because of what happens next.</div></div></div>
               <div class="feature-item"><div class="feature-icon">◎</div><div><div class="feature-name">System Boundary Detection</div><div class="feature-desc">Decisions cross boundaries between economic, environmental, social and political systems. AMuN traces across all of them.</div></div></div>
-              <div class="feature-item"><div class="feature-icon">∿</div><div><div class="feature-name">Scenario Comparison</div><div class="feature-desc">Compare multiple decision options on their full consequence profiles — not just immediate costs and benefits.</div></div></div>
+              <div class="feature-item"><div class="feature-icon">∿</div><div><div class="feature-name">Human vs AI Assessment</div><div class="feature-desc">Set your own likelihood estimate and compare it against AI-generated research ranges. See where you and the data agree — and where you diverge.</div></div></div>
               <div class="feature-item"><div class="feature-icon">⧖</div><div><div class="feature-name">Time Horizon Modeling</div><div class="feature-desc">What happens in a year vs a decade vs what becomes irreversible — separated and made visible.</div></div></div>
             </div>
           </div>
@@ -257,9 +345,9 @@
           </div>
         </div>
         <div class="use-grid reveal">
-          <div class="use-card"><div class="use-tag">// Policy</div><div class="use-name">Government Decisions</div><p class="use-desc">Infrastructure investment, energy policy, healthcare reform, trade agreements — decisions that affect millions across decades. AMuN maps consequences before commitments are made and billions are spent.</p></div>
+          <div class="use-card"><div class="use-tag">// Policy</div><div class="use-name">Government Decisions</div><p class="use-desc">Infrastructure investment, energy policy, healthcare reform, trade agreements — decisions affecting millions across decades. AMuN maps consequences before commitments are made and billions are spent.</p></div>
           <div class="use-card"><div class="use-tag">// Business</div><div class="use-name">Strategic Planning</div><p class="use-desc">Market entry, supply chain decisions, technology investment — choices that look straightforward often have regulatory, reputational and economic consequences that arrive years later.</p></div>
-          <div class="use-card"><div class="use-tag">// Energy</div><div class="use-name">Infrastructure Siting</div><p class="use-desc">Where to build a data center. Whether to approve a pipeline. How to design a national energy transition. These decisions have water, climate, economic and community consequences that standard analysis misses.</p></div>
+          <div class="use-card"><div class="use-tag">// Energy</div><div class="use-name">Infrastructure Siting</div><p class="use-desc">Where to build a data centre. Whether to approve a pipeline. How to design a national energy transition. These decisions have water, climate, economic and community consequences that standard analysis misses.</p></div>
           <div class="use-card"><div class="use-tag">// Health</div><div class="use-name">Health Policy</div><p class="use-desc">Drug approval, treatment protocol changes, healthcare system reforms — decisions with economic, behavioural and equity consequences that compound over years and affect populations unevenly.</p></div>
           <div class="use-card"><div class="use-tag">// Individual</div><div class="use-name">Personal Decisions</div><p class="use-desc">Career changes, financial decisions, educational paths — AMuN's consequence mapping applies at every scale. The question is always the same: what does this decision actually do?</p></div>
           <div class="use-card"><div class="use-tag">// Reconciliation</div><div class="use-name">Indigenous Relations</div><p class="use-desc">Resource development on Indigenous territories, treaty implementation, energy infrastructure approvals — decisions with profound historical and community consequences that require full visibility before proceeding.</p></div>
@@ -274,7 +362,7 @@
           <div class="reveal">
             <div class="section-tag">// The insight behind AMuN</div>
             <div class="why-title">Education is not intelligence.</div>
-            <p class="why-body">The people who designed Canadian residential school policy were educated, credentialed and certain of their conclusions. They were wrong — not because they lacked information but because they never examined their foundational assumptions. They optimized for a goal that was itself wrong.</p>
+            <p class="why-body">The people who designed Canadian residential school policy were educated, credentialed and certain of their conclusions. They were wrong — not because they lacked information but because they never examined their foundational assumptions. They optimised for a goal that was itself wrong.</p>
             <p class="why-body">AMuN does not tell you what goal to have. It shows you what the decision actually does — across all the systems it touches, over all the time horizons that matter — so that the assumptions are visible rather than hidden.</p>
             <div class="quote-block">
               <div class="quote-text">Never confuse education with intelligence. You can have a PhD and still be an idiot.</div>
@@ -285,7 +373,7 @@
             <div class="section-tag">// Design principles</div>
             <div class="principle-list">
               <div class="principle-item"><div class="principle-num">01</div><div><div class="principle-name">No Hidden Complexity</div><div class="principle-desc">Every consequence traceable to its source. No unexplained scores. No black boxes.</div></div></div>
-              <div class="principle-item"><div class="principle-num">02</div><div><div class="principle-name">Accessible To Everyone</div><div class="principle-desc">The first question AMuN asks is simple enough for anyone to answer. Good decisions should not require specialist credentials.</div></div></div>
+              <div class="principle-item"><div class="principle-num">02</div><div><div class="principle-name">Transparent By Design</div><div class="principle-desc">All likelihood estimates shown as ranges, not precise numbers. Official data sources cited. Limitations stated clearly. Always.</div></div></div>
               <div class="principle-item"><div class="principle-num">03</div><div><div class="principle-name">Neutral On Outcomes</div><div class="principle-desc">AMuN does not tell you what to decide. It maps what will happen if you do. The judgment is yours. The information is complete.</div></div></div>
               <div class="principle-item"><div class="principle-num">04</div><div><div class="principle-name">Open Source</div><div class="principle-desc">Every assumption in the model is visible and challengeable. The tool that surfaces hidden assumptions cannot itself be a black box.</div></div></div>
               <div class="principle-item"><div class="principle-num">05</div><div><div class="principle-name">Causation Not Correlation</div><div class="principle-desc">Knowing that two things happen together is not knowing why one causes the other. Why is what changes decisions.</div></div></div>
@@ -331,10 +419,46 @@
   </footer>
 
   <script>
+    // ─── AMuN DROPDOWN ──────────────────────────────────────
+    let amunLoaded = false;
+
+    function toggleAMuN() {
+      const toggle = document.getElementById('amun-toggle');
+      const panel  = document.getElementById('amun-panel');
+      const isOpen = panel.classList.contains('open');
+      if (isOpen) {
+        panel.classList.remove('open');
+        toggle.classList.remove('open');
+      } else {
+        panel.classList.add('open');
+        toggle.classList.add('open');
+        // Load iframe only when first opened
+        if (!amunLoaded) {
+          document.getElementById('amun-frame').src = 'amun.html';
+          amunLoaded = true;
+        }
+        // Smooth scroll to the panel
+        setTimeout(() => {
+          document.getElementById('amun-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+      }
+    }
+
+    function openAMuN() {
+      const panel = document.getElementById('amun-panel');
+      if (!panel.classList.contains('open')) toggleAMuN();
+      else {
+        document.getElementById('amun-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // ─── BACKGROUND ANIMATION — consequence trees ────────────
+    // Always has trees visible — staggered so something always grows
     const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx    = canvas.getContext('2d');
     let W, H, trees = [];
 
+    // Branch with proper fade that resets gracefully
     class Branch {
       constructor(x, y, angle, length, depth, alpha) {
         this.x = x; this.y = y;
@@ -343,16 +467,16 @@
         this.depth = depth;
         this.alpha = alpha;
         this.grown = 0;
-        this.speed = 0.018 + Math.random() * 0.012;
+        this.speed = 0.015 + Math.random() * 0.012;
         this.children = [];
         this.spawned = false;
-        this.fade = false;
         this.fadeAlpha = alpha;
+        this.fading = false;
       }
       update() {
-        if (this.fade) {
-          this.fadeAlpha -= 0.003;
-          this.children.forEach(c => c.fade = true);
+        if (this.fading) {
+          this.fadeAlpha = Math.max(0, this.fadeAlpha - 0.0025);
+          this.children.forEach(c => c.fading = true);
           return;
         }
         if (this.grown < 1) {
@@ -361,58 +485,69 @@
           this.spawned = true;
           const spread = (Math.PI / 5) + Math.random() * (Math.PI / 8);
           const newLen = this.length * (0.6 + Math.random() * 0.15);
-          const newAlpha = this.alpha * 0.75;
+          const nAlpha = this.alpha * 0.75;
           const ex = this.x + Math.cos(this.angle) * this.length;
           const ey = this.y + Math.sin(this.angle) * this.length;
-          this.children.push(new Branch(ex, ey, this.angle - spread, newLen, this.depth - 1, newAlpha));
-          this.children.push(new Branch(ex, ey, this.angle + spread, newLen, this.depth - 1, newAlpha));
+          this.children.push(new Branch(ex, ey, this.angle - spread, newLen, this.depth - 1, nAlpha));
+          this.children.push(new Branch(ex, ey, this.angle + spread, newLen, this.depth - 1, nAlpha));
           if (Math.random() < 0.4) {
-            this.children.push(new Branch(ex, ey, this.angle + (Math.random() - 0.5) * 0.3, newLen * 0.7, this.depth - 1, newAlpha * 0.6));
+            this.children.push(new Branch(ex, ey, this.angle + (Math.random() - 0.5) * 0.3, newLen * 0.7, this.depth - 1, nAlpha * 0.6));
           }
         }
         this.children.forEach(c => c.update());
       }
       draw() {
-        if (this.fadeAlpha <= 0) return;
+        if (this.fadeAlpha <= 0.005) return;
         const ex = this.x + Math.cos(this.angle) * this.length * this.grown;
         const ey = this.y + Math.sin(this.angle) * this.length * this.grown;
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
         ctx.lineTo(ex, ey);
         ctx.strokeStyle = `rgba(192,192,220,${this.fadeAlpha})`;
-        ctx.lineWidth = Math.max(0.3, this.depth * 0.4);
+        ctx.lineWidth = Math.max(0.3, this.depth * 0.38);
         ctx.stroke();
+        // Leaf dot — stays visible even after fading
         if (this.grown >= 1 && this.depth === 0) {
           ctx.beginPath();
-          ctx.arc(ex, ey, 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(232,232,255,${this.fadeAlpha * 1.5})`;
+          ctx.arc(ex, ey, 1.4, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(232,232,255,${this.fadeAlpha * 1.4})`;
           ctx.fill();
         }
         this.children.forEach(c => c.draw());
       }
       isFullyFaded() {
-        return this.fadeAlpha <= 0 && this.children.every(c => c.isFullyFaded());
+        return this.fadeAlpha <= 0.005 && this.children.every(c => c.isFullyFaded());
+      }
+      isFullyGrown() {
+        return this.grown >= 1 && (this.depth === 0 || (this.spawned && this.children.every(c => c.isFullyGrown())));
       }
     }
 
     class Tree {
-      constructor() { this.reset(); }
-      reset() {
+      constructor(stagger) {
+        this.reset(stagger);
+      }
+      reset(stagger) {
         this.x = Math.random() * W;
         this.y = Math.random() * H;
         const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
-        const len = Math.random() * 40 + 25;
+        const len   = Math.random() * 38 + 22;
         const depth = Math.floor(Math.random() * 3) + 3;
-        this.root = new Branch(this.x, this.y, angle, len, depth, 0.18 + Math.random() * 0.1);
-        this.age = 0;
-        this.maxAge = 500 + Math.random() * 400;
+        this.root = new Branch(this.x, this.y, angle, len, depth, 0.16 + Math.random() * 0.1);
+        // Stagger: skip ahead in lifecycle so different trees are at different stages
+        this.age    = stagger ? Math.floor(Math.random() * 600) : 0;
+        this.maxAge = 520 + Math.random() * 380;
         this.fading = false;
+        // Pre-run update for staggered trees so they aren't all at root
+        if (stagger && this.age > 0) {
+          for (let i = 0; i < this.age; i++) this.root.update();
+        }
       }
       update() {
         this.age++;
         if (this.age > this.maxAge && !this.fading) {
           this.fading = true;
-          this.root.fade = true;
+          this.root.fading = true;
         }
         this.root.update();
       }
@@ -420,30 +555,34 @@
       isDead() { return this.fading && this.root.isFullyFaded(); }
     }
 
+    const TARGET_TREES = 14; // always maintain this many trees
+
     function resize() {
-      W = canvas.width = window.innerWidth;
+      W = canvas.width  = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      trees = Array.from({ length: 12 }, () => {
-        const t = new Tree();
-        t.age = Math.floor(Math.random() * 300);
-        return t;
-      });
+      // Build initial staggered population so screen is never empty
+      trees = Array.from({ length: TARGET_TREES }, () => new Tree(true));
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
+      // Remove dead trees and replenish immediately — no gap
       trees = trees.filter(t => !t.isDead());
-      while (trees.length < 12) trees.push(new Tree());
+      while (trees.length < TARGET_TREES) trees.push(new Tree(false));
       trees.forEach(t => { t.update(); t.draw(); });
       requestAnimationFrame(draw);
     }
 
     window.addEventListener('resize', resize);
-    resize(); draw();
+    resize();
+    draw();
 
+    // Nav scroll
     window.addEventListener('scroll', () => {
       document.getElementById('nav').style.borderBottomColor = window.scrollY > 40 ? 'rgba(28,28,28,0.9)' : 'var(--border)';
     });
+
+    // Reveal
     const obs = new IntersectionObserver(entries => {
       entries.forEach((e, i) => { if (e.isIntersecting) { setTimeout(() => e.target.classList.add('visible'), i * 100); obs.unobserve(e.target); } });
     }, { threshold: 0.08 });
