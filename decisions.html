@@ -453,123 +453,150 @@
     }
 
     // ─── BACKGROUND ANIMATION — consequence trees ────────────
-    // Always has trees visible — staggered so something always grows
+    // Trees grow fully, then stay visible permanently at resting opacity.
+    // New trees spawn continuously in other locations on top of resting ones.
     const canvas = document.getElementById('bg-canvas');
     const ctx    = canvas.getContext('2d');
-    let W, H, trees = [];
+    let W, H;
 
-    // Branch with proper fade that resets gracefully
+    const REST_ALPHA  = 0.045;  // opacity branches settle at after growing
+    const GROW_ALPHA  = 0.20;   // opacity while actively growing
+    const GROW_SPEED  = 0.014;  // how fast branches extend
+    const SETTLE_RATE = 0.003;  // how fast growing alpha fades to resting
+
     class Branch {
       constructor(x, y, angle, length, depth, alpha) {
         this.x = x; this.y = y;
         this.angle = angle;
         this.length = length;
         this.depth = depth;
-        this.alpha = alpha;
+        this.drawAlpha = alpha;   // current rendered opacity
+        this.targetAlpha = alpha; // what it is settling toward
         this.grown = 0;
-        this.speed = 0.015 + Math.random() * 0.012;
+        this.speed = GROW_SPEED + Math.random() * 0.01;
         this.children = [];
         this.spawned = false;
-        this.fadeAlpha = alpha;
-        this.fading = false;
+        this.done = false;        // true once fully grown AND settled
       }
       update() {
-        if (this.fading) {
-          this.fadeAlpha = Math.max(0, this.fadeAlpha - 0.0025);
-          this.children.forEach(c => c.fading = true);
-          return;
-        }
+        // Grow the branch
         if (this.grown < 1) {
           this.grown = Math.min(1, this.grown + this.speed);
         } else if (!this.spawned && this.depth > 0) {
+          // Spawn children once this segment is fully grown
           this.spawned = true;
-          const spread = (Math.PI / 5) + Math.random() * (Math.PI / 8);
-          const newLen = this.length * (0.6 + Math.random() * 0.15);
-          const nAlpha = this.alpha * 0.75;
+          const spread  = Math.PI / 5 + Math.random() * (Math.PI / 8);
+          const newLen  = this.length * (0.6 + Math.random() * 0.15);
+          const childA  = this.drawAlpha * 0.78;
           const ex = this.x + Math.cos(this.angle) * this.length;
           const ey = this.y + Math.sin(this.angle) * this.length;
-          this.children.push(new Branch(ex, ey, this.angle - spread, newLen, this.depth - 1, nAlpha));
-          this.children.push(new Branch(ex, ey, this.angle + spread, newLen, this.depth - 1, nAlpha));
-          if (Math.random() < 0.4) {
-            this.children.push(new Branch(ex, ey, this.angle + (Math.random() - 0.5) * 0.3, newLen * 0.7, this.depth - 1, nAlpha * 0.6));
-          }
+          this.children.push(new Branch(ex, ey, this.angle - spread, newLen, this.depth - 1, childA));
+          this.children.push(new Branch(ex, ey, this.angle + spread, newLen, this.depth - 1, childA));
+          if (Math.random() < 0.4)
+            this.children.push(new Branch(ex, ey, this.angle + (Math.random() - 0.5) * 0.3, newLen * 0.65, this.depth - 1, childA * 0.6));
         }
+
+        // Settle alpha toward resting value once fully grown
+        if (this.grown >= 1 && this.depth === 0) {
+          this.targetAlpha = REST_ALPHA;
+        }
+        if (Math.abs(this.drawAlpha - this.targetAlpha) > 0.001) {
+          this.drawAlpha += (this.targetAlpha - this.drawAlpha) * SETTLE_RATE * 8;
+        }
+
         this.children.forEach(c => c.update());
       }
       draw() {
-        if (this.fadeAlpha <= 0.005) return;
         const ex = this.x + Math.cos(this.angle) * this.length * this.grown;
         const ey = this.y + Math.sin(this.angle) * this.length * this.grown;
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
         ctx.lineTo(ex, ey);
-        ctx.strokeStyle = `rgba(192,192,220,${this.fadeAlpha})`;
+        ctx.strokeStyle = `rgba(192,192,220,${this.drawAlpha})`;
         ctx.lineWidth = Math.max(0.3, this.depth * 0.38);
         ctx.stroke();
-        // Leaf dot — stays visible even after fading
+        // Terminal dot — stays permanently
         if (this.grown >= 1 && this.depth === 0) {
           ctx.beginPath();
-          ctx.arc(ex, ey, 1.4, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(232,232,255,${this.fadeAlpha * 1.4})`;
+          ctx.arc(ex, ey, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(232,232,255,${this.drawAlpha * 1.6})`;
           ctx.fill();
         }
         this.children.forEach(c => c.draw());
       }
-      isFullyFaded() {
-        return this.fadeAlpha <= 0.005 && this.children.every(c => c.isFullyFaded());
-      }
-      isFullyGrown() {
-        return this.grown >= 1 && (this.depth === 0 || (this.spawned && this.children.every(c => c.isFullyGrown())));
+      // A branch system is "settled" when all leaves are at resting alpha
+      isSettled() {
+        if (this.depth === 0) return Math.abs(this.drawAlpha - REST_ALPHA) < 0.003;
+        return this.spawned && this.children.every(c => c.isSettled());
       }
     }
 
     class Tree {
-      constructor(stagger) {
-        this.reset(stagger);
-      }
-      reset(stagger) {
+      constructor(preGrown) {
         this.x = Math.random() * W;
         this.y = Math.random() * H;
         const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
-        const len   = Math.random() * 38 + 22;
+        const len   = Math.random() * 42 + 22;
         const depth = Math.floor(Math.random() * 3) + 3;
-        this.root = new Branch(this.x, this.y, angle, len, depth, 0.16 + Math.random() * 0.1);
-        // Stagger: skip ahead in lifecycle so different trees are at different stages
-        this.age    = stagger ? Math.floor(Math.random() * 600) : 0;
-        this.maxAge = 520 + Math.random() * 380;
-        this.fading = false;
-        // Pre-run update for staggered trees so they aren't all at root
-        if (stagger && this.age > 0) {
-          for (let i = 0; i < this.age; i++) this.root.update();
+        this.root   = new Branch(this.x, this.y, angle, len, depth, GROW_ALPHA);
+        this.settled = false;
+        // Pre-run for initially populated trees so screen starts with visible trees
+        if (preGrown) {
+          const steps = Math.floor(Math.random() * 800 + 200);
+          for (let i = 0; i < steps; i++) this.root.update();
         }
       }
       update() {
-        this.age++;
-        if (this.age > this.maxAge && !this.fading) {
-          this.fading = true;
-          this.root.fading = true;
-        }
         this.root.update();
+        if (!this.settled && this.root.isSettled()) this.settled = true;
       }
       draw() { this.root.draw(); }
-      isDead() { return this.fading && this.root.isFullyFaded(); }
     }
 
-    const TARGET_TREES = 14; // always maintain this many trees
+    // Two layers:
+    // restingTrees  — fully grown, always visible at low opacity (accumulate over time)
+    // growingTrees  — actively growing, bright
+    let restingTrees = [];
+    let growingTrees = [];
+    const MAX_RESTING = 28;   // maximum background trees before oldest removed
+    const CONCURRENT_GROWING = 4; // how many actively grow at once
 
     function resize() {
       W = canvas.width  = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      // Build initial staggered population so screen is never empty
-      trees = Array.from({ length: TARGET_TREES }, () => new Tree(true));
+      // Seed initial resting background
+      restingTrees = Array.from({ length: 16 }, () => {
+        const t = new Tree(true);
+        t.settled = true;
+        return t;
+      });
+      growingTrees = Array.from({ length: CONCURRENT_GROWING }, () => new Tree(false));
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
-      // Remove dead trees and replenish immediately — no gap
-      trees = trees.filter(t => !t.isDead());
-      while (trees.length < TARGET_TREES) trees.push(new Tree(false));
-      trees.forEach(t => { t.update(); t.draw(); });
+
+      // Move settled growing trees to resting layer
+      const nowResting = growingTrees.filter(t => t.settled);
+      const stillGrowing = growingTrees.filter(t => !t.settled);
+      restingTrees.push(...nowResting);
+
+      // Cap resting trees — remove oldest when over limit
+      if (restingTrees.length > MAX_RESTING) {
+        restingTrees = restingTrees.slice(restingTrees.length - MAX_RESTING);
+      }
+
+      growingTrees = stillGrowing;
+
+      // Replenish growing trees
+      while (growingTrees.length < CONCURRENT_GROWING) {
+        growingTrees.push(new Tree(false));
+      }
+
+      // Draw resting first (background), then growing on top (foreground)
+      restingTrees.forEach(t => { t.update(); t.draw(); });
+      growingTrees.forEach(t => { t.update(); t.draw(); });
+
       requestAnimationFrame(draw);
     }
 
