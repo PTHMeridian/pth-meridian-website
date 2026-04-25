@@ -21,605 +21,671 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-const { useState } = React;
+const { useState, useCallback } = React;
 
-// ─── DISCLAIMER — hardwired, non-negotiable ───────────────────
-const DISCLAIMER = "All likelihood estimates are expressed as RANGES only and represent structured assessments grounded in official public data from Statistics Canada, Natural Resources Canada, the Canada Energy Regulator and Hydro-Québec — not precise predictions, guarantees or professional advice of any kind. Context data reflects official sources as of 2024–2026 and is subject to change. Likelihood ranges remain qualitative judgments informed by this data. PTH Meridian does not guarantee any outcome. This tool is a thinking aid, not an oracle. No user data is collected or stored.";
+// ── DISCLAIMER ────────────────────────────────────────────────
+const DISCLAIMER = "All likelihood estimates are expressed as RANGES only and represent structured assessments grounded in official public data from Statistics Canada, Natural Resources Canada, the Canada Energy Regulator, WHO, and other public sources — not precise predictions, guarantees or professional advice of any kind. Ranges are qualitative judgments informed by available research. Data subject to change. PTH Meridian does not guarantee any outcome. No user data is collected or stored.";
 
-// ─── DESIGN TOKENS ───────────────────────────────────────────
+// ── DESIGN TOKENS ─────────────────────────────────────────────
 const C = {
-  void:"#000000", deep:"#080808", surface:"#0E0E0E",
-  border:"#1C1C1C", silver:"#C0C0D0", ice:"#E8E8FF",
-  dim:"#252530", muted:"#484858", text:"#D8D8E8",
-  green:"#4ade80", yellow:"#fbbf24", red:"#f87171",
+  void:"#000000",deep:"#080808",surface:"#0E0E0E",raised:"#141414",
+  border:"#1C1C1C",borderHi:"#2A2A2A",silver:"#C0C0D0",ice:"#E8E8FF",
+  dim:"#252530",muted:"#484858",text:"#D8D8E8",
+  green:"#4ade80",yellow:"#fbbf24",red:"#f87171",
 };
-
-// Range helpers — [low, high] e.g. [55,75]
-const mid   = r => Math.round((r[0]+r[1])/2);
-const rangeLabel = r => {
-  const m = mid(r);
-  return m>=65 ? "Favourable" : m>=40 ? "Moderate" : "Challenging";
-};
-const rangeColor = r => {
-  const m = mid(r);
-  return m>=65 ? C.green : m>=40 ? C.yellow : C.red;
-};
-const rangeStr = r => `${r[0]}–${r[1]}%`;
-
-// Qualitative label for single impact dimension score
-const impactLabel = s => s>=65?"Favourable":s>=40?"Moderate":"Challenging";
+const mid = r => Math.round((r[0]+r[1])/2);
+const rangeColor = r => { const m=mid(r); return m>=65?C.green:m>=40?C.yellow:C.red; };
+const rangeLabel = r => { const m=mid(r); return m>=65?"Favourable":m>=40?"Moderate":"Challenging"; };
+const rangeStr = r => r[0]+"–"+r[1]+"%";
 const impactColor = s => s>=65?C.green:s>=40?C.yellow:C.red;
 
-// ─── LAYOUT CONSTANTS ─────────────────────────────────────────
-const SVG_W = 1000;
-const NW = 145, NH = 62, RW = 210, RH = 58;
-const LY  = [54, 196, 346, 498];
-const PAD = 14;
+// ── LAYOUT ────────────────────────────────────────────────────
+const SVG_W=1000, NW=145, NH=62, RW=210, RH=58, PAD=14;
+const LY=[54,196,346,498];
 
-// Group-clamped position calculator — no overlaps in any scenario
 function groupPos(parentX, count, preferred) {
-  const minSpan = NW + 16;
-  const maxSpan = count>1 ? (SVG_W - NW - PAD*2)/(count-1) : preferred;
-  const span    = Math.max(minSpan, Math.min(preferred, maxSpan));
-  const total   = (count-1)*span;
-  let   start   = parentX - total/2;
-  start = Math.max(NW/2+PAD, start);
-  const rightWall = SVG_W - NW/2 - PAD;
-  if (start+total > rightWall) start = rightWall - total;
-  start = Math.max(NW/2+PAD, start);
-  return Array.from({length:count}, (_,i) => start + i*span);
+  const minSpan=NW+16;
+  const maxSpan=count>1?(SVG_W-NW-PAD*2)/(count-1):preferred;
+  const span=Math.max(minSpan,Math.min(preferred,maxSpan));
+  const total=(count-1)*span;
+  let start=parentX-total/2;
+  start=Math.max(NW/2+PAD,start);
+  const rw=SVG_W-NW/2-PAD;
+  if(start+total>rw) start=rw-total;
+  start=Math.max(NW/2+PAD,start);
+  return Array.from({length:count},(_,i)=>start+i*span);
 }
 
-// ─── TREE DATA — ranges only, never specific percentages ──────
-const TREE = {
-  id:"root", label:"Alberta Data Centres\nEnergy & Water", type:"root",
-  children:[
-    {
-      id:"water", label:"Water &\nEnvironment", type:"decision",
-      children:[
-        { id:"cool_tech", label:"Change Cooling\nTechnology", type:"decision",
-          children:[
-            { id:"immersion", label:"Liquid\nImmersion", type:"leaf",
-              aiRange:[50,70],
-              summary:"Mandate immersion cooling — servers submerged in dielectric fluid, zero water use. Proven at scale by Microsoft, Meta and Alibaba. Estimated 20–30% capital premium, potentially offset by provincial grants. Keeps investment in Alberta.",
-              fin:[45,65], tax:[55,72], energy:[55,72], liv:[60,78],
-              gov:[42,60], priv:[40,60], env:[70,88], com:[60,80] },
-            { id:"air_cool", label:"Air Cooling\n(Cold Climate)", type:"leaf",
-              aiRange:[45,62],
-              summary:"Use Alberta's cold climate for direct air cooling — viable 7–8 months per year with no mechanical systems. Lowest capital cost of all water-free options. Modest summer energy penalty. Simplest regulatory path estimated at 12–18 months.",
-              fin:[55,73], tax:[55,73], energy:[45,65], liv:[58,76],
-              gov:[52,70], priv:[45,63], env:[62,80], com:[55,74] },
-            { id:"waste_heat", label:"Waste Heat\nRecovery", type:"leaf",
-              aiRange:[35,60],
-              summary:"Capture server waste heat for community district heating. Proven in Helsinki and Stockholm at city scale. Alberta lacks district heating infrastructure — significant retrofit required. Most viable for new communities. Estimated 5–8 year timeline.",
-              fin:[35,55], tax:[50,68], energy:[62,80], liv:[68,86],
-              gov:[20,40], priv:[30,50], env:[75,93], com:[72,90] },
-          ]},
-        { id:"relocate", label:"Relocate to\nBetter Region", type:"decision",
-          children:[
-            { id:"north_ab", label:"Northern\nAlberta", type:"leaf",
-              aiRange:[43,63],
-              summary:"Peace River or Grande Prairie — cooler climate, less water-stressed. UBC/Nature Climate Change study confirms glacier retreat will bring shortages to 1 in 4 Albertans (1M+ people), grounding the southern Alberta water risk. AESO grid infrastructure deficit remains the primary development challenge. Estimated 4–6 years from decision to operation.",
-              fin:[40,60], tax:[50,68], energy:[35,55], liv:[55,73],
-              gov:[23,43], priv:[33,53], env:[62,80], com:[55,73] },
-            { id:"quebec", label:"Quebec\nHydroelectric", type:"leaf",
-              aiRange:[63,80],
-              summary:"Official 2024 data confirms Montreal large-power electricity at 5.74¢/kWh vs Calgary at 10.46¢/kWh and Edmonton at 13.17¢/kWh (Hydro-Québec 2024 Comparison Report). Cold climate, surplus hydro capacity, and established data centre precedent already attracting major operators. Alberta political resistance is the primary implementation barrier.",
-              fin:[68,86], tax:[32,52], energy:[72,90], liv:[50,68],
-              gov:[58,76], priv:[66,84], env:[75,93], com:[53,71] },
-            { id:"manitoba", label:"Manitoba\nHydroelectric", type:"leaf",
-              aiRange:[53,72],
-              summary:"Nelson River hydro surplus, cold climate, acute northern community economic need. Greater development potential than Quebec. Thompson and The Pas regions are specifically suitable. Less established approval framework than Quebec adds estimated 6–12 months.",
-              fin:[58,76], tax:[45,63], energy:[60,78], liv:[62,80],
-              gov:[45,63], priv:[42,62], env:[73,91], com:[66,84] },
-          ]},
-        { id:"integrate", label:"Community\nIntegration", type:"decision",
-          children:[
-            { id:"fn_hybrid", label:"First Nations\nHybrid", type:"leaf",
-              aiRange:[55,75],
-              summary:"Official NRCan data confirms 280+ remote communities with ~200,000 people remain off-grid, with ~70% dependent on diesel. On-reserve households spend 3x the income share on energy vs average Canadians (confirmed data). Data centre + Indigenous-owned renewables + waste heat recovery replaces diesel entirely. Federal CERRC program has committed $453M to diesel reduction in remote communities.",
-              fin:[42,62], tax:[55,73], energy:[62,80], liv:[75,93],
-              gov:[18,38], priv:[35,55], env:[78,96], com:[84,100] },
-            { id:"north_hybrid", label:"Northern AB\nTown Model", type:"leaf",
-              aiRange:[48,68],
-              summary:"Integrated development in a northern Alberta town facing economic decline — data centre, co-located renewables and district heating. Simpler approvals than First Nations model. Provincial economic development funding available. Estimated 4–6 years.",
-              fin:[45,65], tax:[55,73], energy:[52,70], liv:[65,83],
-              gov:[28,48], priv:[40,60], env:[68,86], com:[68,86] },
-          ]},
-      ]
-    },
-    {
-      id:"energy", label:"Energy Cost\n& Grid", type:"decision",
-      children:[
-        { id:"renewable", label:"Renewable\nEnergy Pairing", type:"leaf",
-          aiRange:[45,65],
-          summary:"Require all new data centres to match with dedicated new renewable generation — solar or wind. Alberta's solar resource is world-class. Significant additional capital required. AESO interconnection queue currently estimated at 3+ years and is the primary timeline constraint.",
-          fin:[38,58], tax:[58,76], energy:[48,66], liv:[50,68],
-          gov:[32,52], priv:[42,62], env:[66,84], com:[45,63] },
-        { id:"hydro_rel", label:"Hydro Region\nRelocation", type:"leaf",
-          aiRange:[60,80],
-          summary:"Redirect investment to Quebec or Manitoba for cheapest clean baseload electricity. Market is already moving this direction voluntarily without government direction. Federal government has interest in keeping investment in Canada. Alberta political resistance requires federal facilitation.",
-          fin:[65,83], tax:[35,55], energy:[70,88], liv:[52,70],
-          gov:[55,73], priv:[64,82], env:[74,92], com:[55,73] },
-        { id:"smr", label:"Small Modular\nReactors", type:"leaf",
-          aiRange:[20,45],
-          summary:"Long-term plan: SMR installations providing 24/7 clean baseload power. First Canadian SMR (OPG Darlington) not expected operational until 2034 at earliest. Alberta currently has no nuclear regulatory framework — would require CNSC approval. Timeline completely misaligned with current data centre urgency. NRCan does not include SMR in near-term Alberta energy planning.",
-          fin:[25,45], tax:[45,63], energy:[42,60], liv:[38,56],
-          gov:[10,28], priv:[22,42], env:[55,73], com:[32,52] },
-      ]
-    },
-    {
-      id:"community", label:"Community\nBenefit", type:"decision",
-      children:[
-        { id:"indigenous", label:"Indigenous\nCommunities", type:"leaf",
-          aiRange:[55,72],
-          summary:"Direct development to First Nations communities currently dependent on diesel generators at very high per-unit energy costs. Wataynikaneyap Power provides direct Canadian precedent for Indigenous-owned utility. Strongest alignment with federal reconciliation mandate.",
-          fin:[45,65], tax:[52,70], energy:[65,83], liv:[78,96],
-          gov:[20,40], priv:[32,52], env:[76,94], com:[84,100] },
-        { id:"north_rural", label:"Northern Rural\nAlberta", type:"leaf",
-          aiRange:[47,67],
-          summary:"Target towns facing forestry and energy sector decline — High Level, Slave Lake, Manning. Stable technology employment replaces volatile resource sector jobs. Provincial Northern Development Initiative Trust funding available. Estimated 4–6 year timeline.",
-          fin:[45,65], tax:[55,73], energy:[50,68], liv:[64,82],
-          gov:[30,50], priv:[38,58], env:[66,84], com:[66,84] },
-        { id:"south_miti", label:"Southern AB\n+ Mitigations", type:"leaf",
-          aiRange:[35,53],
-          summary:"Keep development as proposed but mandate water-free cooling plus renewable matching plus community benefit agreements. Investment stays local. Adds estimated 25–40% to capital costs. Does not address long-term water system vulnerability from continued glacier retreat.",
-          fin:[38,58], tax:[62,80], energy:[45,63], liv:[48,66],
-          gov:[40,58], priv:[45,63], env:[52,70], com:[50,68] },
-      ]
-    },
-    {
-      id:"speed", label:"Speed of\nImplementation", type:"decision",
-      children:[
-        { id:"fast_track", label:"Fast Track\n1–2 Years", type:"leaf",
-          aiRange:[42,62],
-          summary:"Amend existing approvals to require only water-free cooling technology — no new site selection or environmental reviews required. Solves the most urgent water problem on the shortest realistic timeline. Does not optimise energy source, community benefit or long-term sustainability.",
-          fin:[45,65], tax:[58,76], energy:[48,66], liv:[52,70],
-          gov:[62,80], priv:[50,68], env:[55,73], com:[45,63] },
-        { id:"medium_t", label:"Medium Term\n3–5 Years", type:"leaf",
-          aiRange:[48,68],
-          summary:"Pause current approvals and conduct comprehensive site selection across all of Alberta — identifying optimal location across water, energy, climate and community criteria. Risk: investment may leave province during assessment period. Requires credible sustained political commitment.",
-          fin:[48,68], tax:[45,63], energy:[52,70], liv:[55,73],
-          gov:[35,55], priv:[35,55], env:[60,78], com:[55,73] },
-        { id:"long_t", label:"Comprehensive\n5–8 Years", type:"leaf",
-          aiRange:[50,72],
-          summary:"Full community integration strategy — data centre infrastructure, renewable energy development and community heating systems targeting communities with greatest need. Most transformative long-term outcome across all dimensions. Requires sustained political commitment across multiple government terms.",
-          fin:[42,62], tax:[52,70], energy:[62,80], liv:[72,90],
-          gov:[15,35], priv:[32,52], env:[75,93], com:[78,96] },
-      ]
-    },
-  ]
-};
+// ── SCENARIO DATA ─────────────────────────────────────────────
+const SCENARIOS = [
 
-function findNode(id) {
-  if (id==="root") return TREE;
-  for (const l1 of TREE.children) {
-    if (l1.id===id) return l1;
-    if (l1.children) for (const l2 of l1.children) {
-      if (l2.id===id) return l2;
-      if (l2.children) for (const l3 of l2.children)
-        if (l3.id===id) return l3;
-    }
+// ── SCENARIO 1 ────────────────────────────────────────────────
+{
+  id:"s1", tag:"Canada · Alberta",
+  title:"Alberta: Data Centres, Energy & Water",
+  subtitle:"How should Alberta address proposed hyperscale data centre water and energy consumption without stressing communities or watersheds?",
+  sources:"Statistics Canada · NRCan · Hydro-Québec 2024 · Canada Energy Regulator · UBC/Nature Climate Change",
+  root:{
+    id:"root", label:"Alberta Data Centres\nEnergy & Water", type:"root",
+    children:[
+      { id:"water", label:"Water &\nEnvironment", type:"decision",
+        children:[
+          { id:"cool_tech", label:"Change Cooling\nTechnology", type:"decision",
+            children:[
+              { id:"immersion", label:"Liquid\nImmersion", type:"leaf", aiRange:[50,70],
+                summary:"Mandate immersion cooling — servers submerged in dielectric fluid, zero water use. Proven at scale by Microsoft, Meta and Alibaba. Estimated 20–30% capital premium, potentially offset by provincial grants. Keeps investment in Alberta.",
+                fin:[45,65],tax:[55,72],energy:[55,72],liv:[60,78],gov:[42,60],priv:[40,60],env:[70,88],com:[60,80]},
+              { id:"air_cool", label:"Air Cooling\n(Cold Climate)", type:"leaf", aiRange:[45,62],
+                summary:"Use Alberta's cold climate for direct air cooling — viable 7–8 months per year. Lowest capital cost of all water-free options. Modest summer energy penalty. Simplest regulatory path estimated at 12–18 months.",
+                fin:[55,73],tax:[55,73],energy:[45,65],liv:[58,76],gov:[52,70],priv:[45,63],env:[62,80],com:[55,74]},
+              { id:"waste_heat", label:"Waste Heat\nRecovery", type:"leaf", aiRange:[35,60],
+                summary:"Capture server waste heat for community district heating. Proven in Helsinki and Stockholm. Estimated 5–8 year timeline. Alberta lacks district heating infrastructure — significant retrofit required.",
+                fin:[35,55],tax:[50,68],energy:[62,80],liv:[68,86],gov:[20,40],priv:[30,50],env:[75,93],com:[72,90]},
+            ]},
+          { id:"relocate", label:"Relocate to\nBetter Region", type:"decision",
+            children:[
+              { id:"north_ab", label:"Northern\nAlberta", type:"leaf", aiRange:[43,63],
+                summary:"Peace River or Grande Prairie — cooler, less water-stressed. AESO estimates $800M–$1.2B transmission upgrade needed. UBC study confirms glacier retreat will affect 1 in 4 Albertans' water supply. 4–6 year timeline.",
+                fin:[40,60],tax:[50,68],energy:[35,55],liv:[55,73],gov:[23,43],priv:[33,53],env:[62,80],com:[55,73]},
+              { id:"quebec", label:"Quebec\nHydroelectric", type:"leaf", aiRange:[63,80],
+                summary:"Official 2024 data confirms Montreal large-power electricity at 5.74¢/kWh vs Calgary at 10.46¢/kWh (Hydro-Québec 2024). Cold climate, surplus hydro capacity, established data centre precedent. Alberta political resistance is the primary implementation barrier.",
+                fin:[68,86],tax:[32,52],energy:[72,90],liv:[50,68],gov:[58,76],priv:[66,84],env:[75,93],com:[53,71]},
+              { id:"manitoba", label:"Manitoba\nHydroelectric", type:"leaf", aiRange:[53,72],
+                summary:"Nelson River hydro surplus, cold climate, acute northern community economic need. Greater development potential than Quebec. Thompson and The Pas regions suitable. Less established framework adds 6–12 months.",
+                fin:[58,76],tax:[45,63],energy:[60,78],liv:[62,80],gov:[45,63],priv:[42,62],env:[73,91],com:[66,84]},
+            ]},
+          { id:"integrate", label:"Community\nIntegration", type:"decision",
+            children:[
+              { id:"fn_hybrid", label:"First Nations\nHybrid", type:"leaf", aiRange:[55,75],
+                summary:"Data centre + Indigenous-owned renewables + waste heat recovery replacing diesel entirely. NRCan confirms ~70% of 250+ remote communities depend on diesel. Wataynikaneyap Power is direct Canadian precedent. Estimated 6–10 year timeline.",
+                fin:[42,62],tax:[55,73],energy:[62,80],liv:[75,93],gov:[18,38],priv:[35,55],env:[78,96],com:[84,100]},
+              { id:"north_hybrid", label:"Northern AB\nTown Model", type:"leaf", aiRange:[48,68],
+                summary:"Integrated development in a northern Alberta town facing economic decline — data centre, co-located renewables and district heating. Simpler approvals than First Nations model. Provincial development funding available. 4–6 years.",
+                fin:[45,65],tax:[55,73],energy:[52,70],liv:[65,83],gov:[28,48],priv:[40,60],env:[68,86],com:[68,86]},
+            ]},
+        ]},
+      { id:"energy", label:"Energy Cost\n& Grid", type:"decision",
+        children:[
+          { id:"renewable", label:"Renewable\nEnergy Pairing", type:"leaf", aiRange:[45,65],
+            summary:"Require all new data centres to match with dedicated new renewable generation. Alberta solar resource is world-class. AESO interconnection queue currently estimated at 3+ years. Significant additional capital required.",
+            fin:[38,58],tax:[58,76],energy:[48,66],liv:[50,68],gov:[32,52],priv:[42,62],env:[66,84],com:[45,63]},
+          { id:"hydro_rel", label:"Hydro Region\nRelocation", type:"leaf", aiRange:[60,80],
+            summary:"Redirect to Quebec or Manitoba for cheapest clean baseload at $0.055–0.07/kWh vs Alberta's $0.12–0.18/kWh (CER data). Market already moving this direction voluntarily. Federal facilitation required for Alberta political acceptance.",
+            fin:[65,83],tax:[35,55],energy:[70,88],liv:[52,70],gov:[55,73],priv:[64,82],env:[74,92],com:[55,73]},
+          { id:"smr", label:"Small Modular\nReactors", type:"leaf", aiRange:[20,45],
+            summary:"Long-term plan: SMR installations for 24/7 clean baseload. OPG Darlington not operational until 2034 at earliest. Alberta has no nuclear regulatory framework. Timeline completely misaligned with current data centre urgency.",
+            fin:[25,45],tax:[45,63],energy:[42,60],liv:[38,56],gov:[10,28],priv:[22,42],env:[55,73],com:[32,52]},
+        ]},
+      { id:"community", label:"Community\nBenefit", type:"decision",
+        children:[
+          { id:"indigenous", label:"Indigenous\nCommunities", type:"leaf", aiRange:[55,72],
+            summary:"StatsCan 2024 confirms 26% of Indigenous households live in energy poverty vs 5.6% national average. NRCan: ~70% of 250+ remote communities depend on diesel. Federal CERRC program has committed $453M to diesel reduction. Multiple funding streams available.",
+            fin:[45,65],tax:[52,70],energy:[65,83],liv:[78,96],gov:[20,40],priv:[32,52],env:[76,94],com:[84,100]},
+          { id:"north_rural", label:"Northern Rural\nAlberta", type:"leaf", aiRange:[47,67],
+            summary:"Target towns facing forestry and energy sector decline — High Level, Slave Lake, Manning. Stable technology employment replaces volatile resource jobs. Provincial Northern Development Initiative Trust funding available.",
+            fin:[45,65],tax:[55,73],energy:[50,68],liv:[64,82],gov:[30,50],priv:[38,58],env:[66,84],com:[66,84]},
+          { id:"south_miti", label:"Southern AB\n+ Mitigations", type:"leaf", aiRange:[35,53],
+            summary:"Keep development as proposed but mandate water-free cooling + renewable matching + community benefit agreements. Adds estimated 25–40% to capital costs. Does not address long-term glacier retreat vulnerability over the 20–30 year facility lifetime.",
+            fin:[38,58],tax:[62,80],energy:[45,63],liv:[48,66],gov:[40,58],priv:[45,63],env:[52,70],com:[50,68]},
+        ]},
+      { id:"speed", label:"Speed of\nImplementation", type:"decision",
+        children:[
+          { id:"fast_track", label:"Fast Track\n1–2 Years", type:"leaf", aiRange:[42,62],
+            summary:"Amend existing approvals to require only water-free cooling — no new site selection or environmental reviews. Solves the most urgent water problem fastest. Does not optimise energy source or community benefit.",
+            fin:[45,65],tax:[58,76],energy:[48,66],liv:[52,70],gov:[62,80],priv:[50,68],env:[55,73],com:[45,63]},
+          { id:"medium_t", label:"Medium Term\n3–5 Years", type:"leaf", aiRange:[48,68],
+            summary:"Pause approvals and conduct comprehensive site selection across all of Alberta. Risk: investment may leave province during assessment. Requires credible sustained political commitment.",
+            fin:[48,68],tax:[45,63],energy:[52,70],liv:[55,73],gov:[35,55],priv:[35,55],env:[60,78],com:[55,73]},
+          { id:"long_t", label:"Comprehensive\n5–8 Years", type:"leaf", aiRange:[50,72],
+            summary:"Full community integration strategy — data centre infrastructure, renewable energy and community heating targeting communities with greatest need. Most transformative outcome. Requires sustained political commitment across multiple government terms.",
+            fin:[42,62],tax:[52,70],energy:[62,80],liv:[72,90],gov:[15,35],priv:[32,52],env:[75,93],com:[78,96]},
+        ]},
+    ]
+  }
+},
+
+// ── SCENARIO 2 ────────────────────────────────────────────────
+{
+  id:"s2", tag:"Canada · National",
+  title:"Canada: Interprovincial Energy Corridor",
+  subtitle:"Should Canada build an east-west energy corridor connecting regional surpluses to areas of need — and if so, how?",
+  sources:"Statistics Canada · Canada Energy Regulator · NRCan · Alberta Electric System Operator · Hydro-Québec · Manitoba Hydro",
+  root:{
+    id:"root", label:"Canadian East-West\nEnergy Corridor", type:"root",
+    children:[
+      { id:"grid", label:"Electricity\nTransmission", type:"decision",
+        children:[
+          { id:"national_grid", label:"National\nTransmission Line", type:"decision",
+            children:[
+              { id:"federal_lead", label:"Federal Crown\nCorporation", type:"leaf", aiRange:[38,58],
+                summary:"Federal government builds and owns a national east-west transmission corridor — Quebec hydro surplus reaching Manitoba, Ontario, Saskatchewan and Alberta. CER estimates Canada has $400B+ in stranded renewable energy potential due to lack of interprovincial transmission. Requires constitutional negotiation over provincial energy jurisdiction.",
+                fin:[30,50],tax:[55,72],energy:[70,88],liv:[60,78],gov:[28,48],priv:[30,50],env:[78,95],com:[62,80]},
+              { id:"private_lead", label:"Private Consortium\nWith Guarantees", type:"leaf", aiRange:[45,65],
+                summary:"Private utility consortium builds east-west transmission with federal loan guarantees and regulated rate-of-return. Avoids direct government ownership. Requires interprovincial agreement on wheeling rates and access terms. Estimated 8–12 year construction timeline at this scale.",
+                fin:[40,60],tax:[48,66],energy:[65,83],liv:[55,73],gov:[38,56],priv:[60,78],env:[72,90],com:[55,73]},
+              { id:"indigenous_grid", label:"Indigenous-Led\nTransmission", type:"leaf", aiRange:[42,62],
+                summary:"First Nations corridor ownership along transmission right-of-way — modelled on Wataynikaneyap Power's 1,800km transmission line in Northern Ontario completed 2023. Aligns with reconciliation mandate. Federal financing available through Indigenous Development Finance Corporation. Strongest community benefit profile.",
+                fin:[38,58],tax:[50,68],energy:[60,78],liv:[68,86],gov:[32,52],priv:[42,60],env:[75,92],com:[78,96]},
+            ]},
+          { id:"regional_links", label:"Regional\nInterconnections", type:"decision",
+            children:[
+              { id:"qc_on", label:"Quebec–Ontario\nLink Expansion", type:"leaf", aiRange:[55,72],
+                summary:"Expand existing Quebec-Ontario interconnection capacity — already 2,700MW, could reach 4,000–5,000MW. Hydro-Québec surplus available. Ontario retiring nuclear creates gap AMuN projects as 35–50% renewable by 2030. Regulatory pathway more established than national corridor. Estimated 4–6 year build.",
+                fin:[52,70],tax:[50,68],energy:[65,82],liv:[58,75],gov:[50,68],priv:[55,73],env:[72,90],com:[55,73]},
+              { id:"ab_bc", label:"Alberta–BC\nRenewable Link", type:"leaf", aiRange:[48,68],
+                summary:"Connect Alberta wind and solar resources to BC hydro system — allowing BC to act as a battery for Alberta intermittent renewables. BC Hydro has existing pumped storage potential. CER identifies this as one of Canada's highest-value interconnections. Regulatory approval estimated 3–5 years.",
+                fin:[48,68],tax:[48,66],energy:[62,80],liv:[55,73],gov:[45,63],priv:[52,70],env:[75,92],com:[52,70]},
+            ]},
+          { id:"smart_grid", label:"Smart Grid\nModernisation", type:"decision",
+            children:[
+              { id:"demand_response", label:"Demand Response\nNational Program", type:"leaf", aiRange:[52,70],
+                summary:"National demand response program allowing utilities to reduce industrial load during peak periods in exchange for lower rates — effectively creating virtual transmission capacity. CER estimates 8–12GW of dispatchable demand response is available nationally. Lower capital cost than physical transmission. Estimated 2–4 year implementation.",
+                fin:[60,78],tax:[50,68],energy:[58,76],liv:[55,73],gov:[52,70],priv:[58,76],env:[65,82],com:[52,70]},
+              { id:"storage_network", label:"Grid-Scale Storage\nNetwork", type:"leaf", aiRange:[45,65],
+                summary:"Distributed grid-scale battery storage network reducing need for long-distance transmission by storing surplus locally. Battery costs have fallen approximately 89% since 2010 (BloombergNEF). Creates resilience without constitutional negotiation over interprovincial corridors. Estimated 3–6 year national deployment.",
+                fin:[48,66],tax:[45,63],energy:[55,73],liv:[52,70],gov:[55,72],priv:[55,73],env:[70,88],com:[50,68]},
+            ]},
+        ]},
+      { id:"oil_gas", label:"Oil & Gas\nInfrastructure", type:"decision",
+        children:[
+          { id:"east_pipeline", label:"East-West\nPipeline", type:"leaf", aiRange:[30,55],
+            summary:"New pipeline carrying Alberta crude to eastern Canadian refineries — reducing dependence on US Gulf refineries and imported foreign oil. CER confirms Canada imports approximately 700,000 barrels per day in eastern Canada while exporting Alberta crude south. Energy East was cancelled in 2017; political and regulatory obstacles remain significant.",
+            fin:[40,62],tax:[52,70],energy:[45,65],liv:[48,68],gov:[18,38],priv:[50,70],env:[25,45],com:[38,58]},
+          { id:"refinery", label:"Eastern Refinery\nExpansion", type:"leaf", aiRange:[35,55],
+            summary:"Expand or upgrade existing eastern Canadian refinery capacity — Irving Oil in Saint John, Come By Chance in Newfoundland — to process western Canadian crude. Lower political profile than new pipeline. Addresses eastern energy security without requiring full corridor approval. Long construction timeline of 6–10 years.",
+            fin:[35,55],tax:[48,68],energy:[42,62],liv:[45,65],gov:[35,55],priv:[45,65],env:[30,50],com:[40,60]},
+        ]},
+      { id:"policy", label:"Policy &\nGovernance", type:"decision",
+        children:[
+          { id:"federal_mandate", label:"Federal Clean Energy\nMandate", type:"leaf", aiRange:[42,62],
+            summary:"Federal 2030 Clean Electricity Regulations require 90% non-emitting electricity nationwide by 2035. Provinces largely opposed to federal overreach in energy jurisdiction. Constitutional challenge likely from Alberta and Saskatchewan. Forces interprovincial cooperation through regulatory compliance rather than negotiation.",
+            fin:[38,58],tax:[48,68],energy:[58,78],liv:[52,72],gov:[30,50],priv:[38,58],env:[70,90],com:[50,70]},
+          { id:"carbon_pricing", label:"Carbon Pricing\nHarmonisation", type:"leaf", aiRange:[45,65],
+            summary:"Harmonised national carbon pricing creates economic incentive for interprovincial clean energy trade without requiring direct infrastructure negotiation. CER modelling shows carbon price of $170/tonne by 2030 makes Quebec hydro exports economically compelling for all provinces. Political resistance from Alberta and Saskatchewan remains significant.",
+            fin:[42,62],tax:[50,70],energy:[55,75],liv:[50,70],gov:[38,58],priv:[45,65],env:[68,88],com:[48,68]},
+          { id:"provincial_compact", label:"Voluntary Provincial\nEnergy Compact", type:"leaf", aiRange:[35,55],
+            summary:"Voluntary agreement among willing provinces on clean energy trade, shared transmission and mutual recognition of renewable standards. Avoids constitutional confrontation but leaves out resistant provinces. Limited in scope without Alberta participation. Estimated 3–5 years to negotiate meaningful compact.",
+            fin:[45,65],tax:[45,65],energy:[48,68],liv:[48,68],gov:[42,62],priv:[48,68],env:[60,80],com:[45,65]},
+        ]},
+    ]
+  }
+},
+
+// ── SCENARIO 3 ────────────────────────────────────────────────
+{
+  id:"s3", tag:"Canada · Reconciliation",
+  title:"Canada: Indigenous Remote Energy Sovereignty",
+  subtitle:"How should Canada transition remote First Nations communities from diesel dependence to clean energy sovereignty — and who should own the infrastructure?",
+  sources:"Statistics Canada 2024 · NRCan Remote Communities Energy Database · CIRNAC · Federal Budget 2024 · Wataynikaneyap Power completion report · First Nations Power Authority BC",
+  root:{
+    id:"root", label:"Indigenous Remote\nEnergy Sovereignty", type:"root",
+    children:[
+      { id:"ownership", label:"Ownership\nModel", type:"decision",
+        children:[
+          { id:"fn_owned", label:"First Nations\nFull Ownership", type:"decision",
+            children:[
+              { id:"fn_utility", label:"Indigenous-Owned\nUtility Company", type:"leaf", aiRange:[58,78],
+                summary:"First Nations form or join an Indigenous-owned utility — modelled on Wataynikaneyap Power which completed a 1,800km transmission line in Northern Ontario in 2023, connecting 17 First Nations. StatsCan 2024 confirms 26% of Indigenous households in energy poverty vs 5.6% nationally. Federal CERRC program committed $453M to diesel reduction. Revenue stays in community permanently.",
+                fin:[48,68],tax:[58,78],energy:[68,88],liv:[80,98],gov:[30,50],priv:[38,58],env:[80,98],com:[88,100]},
+              { id:"fn_coop", label:"Community Energy\nCooperative", type:"leaf", aiRange:[52,72],
+                summary:"Community-owned cooperative structure — all members share in energy revenue and governance. Lower capital requirement than full utility. Cooperative structure aligns with many First Nations governance traditions. Federal cooperative development funding available. Estimated 3–5 years to operational status.",
+                fin:[50,70],tax:[55,75],energy:[65,85],liv:[75,95],gov:[35,55],priv:[35,55],env:[78,95],com:[85,100]},
+            ]},
+          { id:"partnership", label:"Public-Private\nPartnership", type:"decision",
+            children:[
+              { id:"provincial_partner", label:"Provincial Utility\nPartnership", type:"leaf", aiRange:[45,65],
+                summary:"Provincial utility (Ontario Power, Manitoba Hydro) partners with First Nations community — utility brings technical capacity, community brings land access and labour. Revenue shared by agreement. Risk: utility may prioritise its own interests over community benefit. Requires strong benefit-sharing agreement negotiated before construction.",
+                fin:[45,65],tax:[50,70],energy:[62,82],liv:[65,85],gov:[42,62],priv:[50,70],env:[72,90],com:[65,85]},
+              { id:"private_ipp", label:"Independent Power\nProducer", type:"leaf", aiRange:[35,55],
+                summary:"Private Independent Power Producer builds and operates — community receives land lease payments and employment. Faster to finance than community ownership but economic returns flow primarily to private investors. Long-term community benefit limited unless equity stake negotiated. Most common current model.",
+                fin:[55,75],tax:[42,62],energy:[58,78],liv:[52,72],gov:[48,68],priv:[65,85],env:[65,85],com:[42,62]},
+            ]},
+        ]},
+      { id:"technology", label:"Technology\nChoice", type:"decision",
+        children:[
+          { id:"solar_storage", label:"Solar + Battery\nStorage", type:"leaf", aiRange:[60,78],
+            summary:"Solar panels with grid-scale battery storage — most cost-effective clean energy option in most remote communities. BloombergNEF confirms battery costs down 89% since 2010. NRCan Remote Communities Energy Database shows solar viable across most of Canada including northern latitudes. Estimated 18–30 months from approval to power-on.",
+            fin:[62,82],tax:[52,72],energy:[68,88],liv:[72,92],gov:[55,75],priv:[52,72],env:[80,98],com:[70,90]},
+          { id:"micro_hydro", label:"Run-of-River\nMicro Hydro", type:"leaf", aiRange:[50,70],
+            summary:"Small run-of-river hydro on local streams — 24/7 baseload power where topography allows. No reservoir required — minimal environmental impact. Many northern First Nations communities have suitable waterways. Capital cost higher than solar but lower long-term operating cost. Estimated 3–5 year development timeline.",
+            fin:[50,70],tax:[52,72],energy:[72,92],liv:[70,90],gov:[42,62],priv:[42,62],env:[70,88],com:[72,92]},
+          { id:"wind_hybrid", label:"Wind + Solar\nHybrid System", type:"leaf", aiRange:[52,72],
+            summary:"Combined wind and solar with battery backup — greater reliability than either alone. Wind fills gaps in winter when solar output drops. Estimated 20–35% lower diesel consumption than solar alone in high-latitude communities. Higher capital cost offset by improved reliability and lower long-term fuel cost.",
+            fin:[48,68],tax:[52,72],energy:[70,90],liv:[72,92],gov:[50,70],priv:[48,68],env:[82,99],com:[72,92]},
+          { id:"grid_connect", label:"Grid Connection\nTransmission Line", type:"leaf", aiRange:[38,58],
+            summary:"Connect remote community to provincial grid via new transmission line — eliminates diesel dependency entirely but requires long transmission distances often exceeding 100km. Wataynikaneyap demonstrates feasibility at scale. Capital cost highest of all options but provides most reliable and lowest long-term cost power. Estimated 5–8 years.",
+            fin:[30,50],tax:[55,75],energy:[78,95],liv:[75,95],gov:[28,48],priv:[38,58],env:[78,95],com:[78,95]},
+        ]},
+      { id:"funding", label:"Funding\nPathway", type:"decision",
+        children:[
+          { id:"federal_grants", label:"Federal Grant\nPrograms", type:"leaf", aiRange:[55,75],
+            summary:"Stack multiple federal programs: CERRC ($453M committed), Clean Economy Investment Tax Credit (30%), Indigenous Development Finance Corporation loans, IRAP innovation funding. Federal Budget 2024 allocated $15B to Indigenous infrastructure. Most communities require grant stacking — single program rarely covers full cost. Estimated 18–24 months to navigate funding applications.",
+            fin:[55,75],tax:[58,78],energy:[65,85],liv:[72,92],gov:[45,65],priv:[38,58],env:[75,93],com:[78,95]},
+          { id:"green_bonds", label:"Indigenous Green\nBond Issuance", type:"leaf", aiRange:[42,62],
+            summary:"First Nations issue green bonds to institutional investors — pension funds, ESG-focused funds — backed by future clean energy revenue. Growing market globally. Requires community credit rating and legal structure. Lower dependence on government funding. Estimated 2–4 years to first issuance from decision.",
+            fin:[48,68],tax:[52,72],energy:[60,80],liv:[68,88],gov:[52,72],priv:[58,78],env:[70,90],com:[72,92]},
+          { id:"provincial_program", label:"Provincial Utility\nCross-Subsidy", type:"leaf", aiRange:[38,58],
+            summary:"Provincial utilities cross-subsidise remote community clean energy transition — urban ratepayers fund rural and remote clean energy through slightly higher rates. Ontario Energy Board has approved this model in limited cases. Equitable distribution argument: remote communities pay dramatically higher energy costs currently. Political resistance from urban ratepayers.",
+            fin:[42,62],tax:[48,68],energy:[58,78],liv:[65,85],gov:[38,58],priv:[35,55],env:[68,88],com:[68,88]},
+        ]},
+    ]
+  }
+},
+
+// ── SCENARIO 4 ────────────────────────────────────────────────
+{
+  id:"s4", tag:"World · Technology",
+  title:"World: Global Data Centre Sustainability Crisis",
+  subtitle:"How should the world address the rapidly escalating energy, water and carbon footprint of global data centre infrastructure — projected to consume 8–10% of global electricity by 2030?",
+  sources:"IEA Data Centre Energy Report 2024 · Uptime Institute · Lawrence Berkeley National Laboratory · IRENA · UN Environment Programme · BloombergNEF",
+  root:{
+    id:"root", label:"Global Data Centre\nSustainability", type:"root",
+    children:[
+      { id:"energy_source", label:"Energy\nSource", type:"decision",
+        children:[
+          { id:"renewable_match", label:"Mandatory 24/7\nRenewable Matching", type:"decision",
+            children:[
+              { id:"ppa_model", label:"Power Purchase\nAgreements", type:"leaf", aiRange:[55,75],
+                summary:"Operators sign long-term Power Purchase Agreements with renewable generators — funding new clean energy capacity. Google and Microsoft already do this voluntarily. IEA confirms data centres account for approximately 2% of global electricity consumption currently, projected to reach 8–10% by 2030. PPA model scales without regulatory mandate.",
+                fin:[50,70],tax:[50,70],energy:[65,85],liv:[55,75],gov:[58,78],priv:[65,85],env:[72,90],com:[50,70]},
+              { id:"reg_mandate", label:"Regulatory\nMandate", type:"leaf", aiRange:[42,62],
+                summary:"National or regional regulation requiring 100% renewable energy matching for all data centres above a threshold size. EU taxonomy already incentivises this. Regulatory mandate accelerates adoption but risks pushing investment to lower-regulation jurisdictions — the 'carbon leakage' problem.",
+                fin:[42,62],tax:[52,72],energy:[68,88],liv:[52,72],gov:[38,58],priv:[48,68],env:[75,93],com:[48,68]},
+            ]},
+          { id:"nuclear_data", label:"Nuclear Energy\nfor Data Centres", type:"decision",
+            children:[
+              { id:"smr_campus", label:"SMR Campus\nDedicated Power", type:"leaf", aiRange:[35,55],
+                summary:"Small Modular Reactors co-located with data centre campuses providing 24/7 clean baseload. Microsoft has signed agreements with Constellation Energy for nuclear-powered data centres. SMR technology proven but commercial deployment at scale not yet demonstrated. Estimated 8–12 year timeline to first dedicated SMR data centre campus.",
+                fin:[30,50],tax:[48,68],energy:[70,90],liv:[50,70],gov:[22,42],priv:[35,55],env:[62,82],com:[40,60]},
+              { id:"existing_nuclear", label:"Co-locate with\nExisting Nuclear", type:"leaf", aiRange:[48,68],
+                summary:"Site new data centres adjacent to existing nuclear plants — direct power purchase without transmission loss. Three Mile Island in Pennsylvania restarted specifically for Microsoft data centre power in 2024. Limited by available nuclear sites but faster than new construction. Estimated 2–4 year development timeline.",
+                fin:[52,72],tax:[50,70],energy:[72,92],liv:[52,72],gov:[48,68],priv:[58,78],env:[65,85],com:[45,65]},
+            ]},
+        ]},
+      { id:"water_global", label:"Water\nConsumption", type:"decision",
+        children:[
+          { id:"zero_water", label:"Zero-Water\nCooling Mandate", type:"leaf", aiRange:[48,68],
+            summary:"International or national mandate requiring all new data centres to use water-free cooling technologies — immersion, air cooling or closed-loop systems. Uptime Institute estimates data centres consumed 660 billion litres of water globally in 2023. UN Environment Programme identifies data centre water use as an emerging critical issue in water-stressed regions.",
+            fin:[42,62],tax:[50,70],energy:[55,75],liv:[60,80],gov:[42,62],priv:[45,65],env:[78,95],com:[55,75]},
+          { id:"water_disclosure", label:"Mandatory Water\nDisclosure", type:"leaf", aiRange:[55,72],
+            summary:"Require all data centres to publicly disclose water consumption per unit of computing — Water Usage Effectiveness (WUE) metric. Creates market pressure and investor pressure without direct mandate. Google, Microsoft and Amazon already voluntarily disclose. Estimated 1–2 years to implement global standard through ISO or GRI framework.",
+            fin:[65,85],tax:[55,75],energy:[55,75],liv:[58,78],gov:[60,80],priv:[62,82],env:[65,85],com:[52,72]},
+          { id:"siting_restrictions", label:"Water-Stress\nSiting Restrictions", type:"leaf", aiRange:[45,65],
+            summary:"Prohibit new water-cooled data centre development in areas classified as water-stressed by WRI Aqueduct Water Risk Atlas — affecting significant portions of US Southwest, Southern Europe, Middle East and parts of India. Forces relocation to water-abundant regions with cold climates. Significant economic disruption to established data centre markets.",
+            fin:[38,58],tax:[45,65],energy:[52,72],liv:[55,75],gov:[38,58],priv:[40,60],env:[72,90],com:[52,72]},
+        ]},
+      { id:"efficiency", label:"Compute\nEfficiency", type:"decision",
+        children:[
+          { id:"ai_efficiency", label:"AI-Optimised\nData Centre Operations", type:"leaf", aiRange:[58,78],
+            summary:"Deploy AI systems to optimise data centre cooling, power management and workload scheduling in real time — DeepMind reduced Google data centre cooling energy by 40% using this approach. Lawrence Berkeley National Laboratory estimates 20–40% efficiency gains available industry-wide through AI optimisation. Fastest and lowest-cost path to meaningful reduction.",
+            fin:[65,85],tax:[55,75],energy:[62,82],liv:[55,75],gov:[60,80],priv:[68,88],env:[65,85],com:[52,72]},
+          { id:"compute_tax", label:"Compute Carbon\nTax", type:"leaf", aiRange:[35,55],
+            summary:"Tax large-scale compute operations proportional to their carbon and water footprint — creating economic incentive for efficiency and renewable energy without mandating specific technology. Politically contentious. Risk of driving data centre investment to lower-tax jurisdictions. Requires international coordination to avoid leakage.",
+            fin:[35,55],tax:[42,62],energy:[52,72],liv:[45,65],gov:[28,48],priv:[32,52],env:[65,85],com:[42,62]},
+          { id:"open_standards", label:"Open Efficiency\nStandards", type:"leaf", aiRange:[52,70],
+            summary:"International open standards for data centre efficiency — PUE, WUE, CUE metrics with mandatory disclosure and progressive improvement targets. Already partially implemented through EU Code of Conduct for Data Centres and US EPA Energy Star. Fastest global adoption pathway. Estimated 2–3 years to meaningful international standard.",
+            fin:[60,80],tax:[52,72],energy:[58,78],liv:[52,72],gov:[55,75],priv:[60,80],env:[62,82],com:[50,70]},
+        ]},
+    ]
+  }
+},
+
+// ── SCENARIO 5 ────────────────────────────────────────────────
+{
+  id:"s5", tag:"World · Health",
+  title:"World: Antimicrobial Resistance — Computational Response",
+  subtitle:"How can computational tools most effectively address the antimicrobial resistance crisis — projected to cause more deaths than cancer by 2050 — given the broken economics of antibiotic development?",
+  sources:"WHO Global Action Plan on AMR · Lancet 2022 AMR mortality study · OECD AMR Policy Insights · CARB-X funding data · Wellcome Trust AMR report · CIHR Canadian AMR strategy",
+  root:{
+    id:"root", label:"Antimicrobial Resistance\nComputational Response", type:"root",
+    children:[
+      { id:"surveillance", label:"Surveillance\n& Detection", type:"decision",
+        children:[
+          { id:"genomic_surv", label:"Genomic\nSurveillance", type:"decision",
+            children:[
+              { id:"global_network", label:"Global Sequencing\nNetwork", type:"leaf", aiRange:[55,75],
+                summary:"Expand WHO Global Antimicrobial Resistance and Use Surveillance System (GLASS) into a real-time genomic sequencing network — identifying resistant strains weeks before they become outbreaks. Lancet 2022 study confirmed 1.27 million deaths directly attributable to AMR annually. Canada's PHAC participates in GLASS but sequencing capacity remains limited outside major centres.",
+                fin:[42,62],tax:[52,72],energy:[52,72],liv:[72,92],gov:[45,65],priv:[38,58],env:[60,80],com:[68,88]},
+              { id:"wastewater_amr", label:"Wastewater AMR\nEpidemiological Monitoring", type:"leaf", aiRange:[60,78],
+                summary:"Monitor wastewater for AMR resistance genes — detecting community-level resistance spread before clinical cases present. Proven in COVID-19 surveillance. Several Canadian municipalities already operating pilots. WHO endorses wastewater surveillance as early warning system. Estimated 2–3 years to national implementation in high-income countries.",
+                fin:[62,82],tax:[55,75],energy:[55,75],liv:[70,90],gov:[58,78],priv:[50,70],env:[60,80],com:[65,85]},
+            ]},
+          { id:"clinical_ai", label:"Clinical AI\nDiagnostics", type:"decision",
+            children:[
+              { id:"rapid_dx", label:"AI-Powered Rapid\nDiagnostics", type:"leaf", aiRange:[58,78],
+                summary:"Deploy AI diagnostic systems distinguishing bacterial from viral infections at point-of-care — reducing inappropriate antibiotic prescribing which drives resistance. WHO identifies inappropriate prescribing as the single largest driver of AMR. Estimated 30–50% of antibiotic prescriptions globally are inappropriate. AI diagnostics in clinical trials showing 85–90% accuracy.",
+                fin:[55,75],tax:[52,72],energy:[55,75],liv:[75,95],gov:[52,72],priv:[58,78],env:[55,75],com:[68,88]},
+              { id:"resistance_pred", label:"Resistance\nPrediction Models", type:"leaf", aiRange:[50,70],
+                summary:"Machine learning models predicting which antibiotics will be effective for a specific patient's infection based on local resistance patterns, patient history and pathogen genomics — enabling precision prescribing. Reduces treatment failure and second-line antibiotic use. Several models in clinical validation. Estimated 3–5 years to widespread clinical deployment.",
+                fin:[50,70],tax:[50,70],energy:[58,78],liv:[72,92],gov:[48,68],priv:[55,75],env:[52,72],com:[65,85]},
+            ]},
+        ]},
+      { id:"drug_discovery", label:"Drug Discovery\n& Development", type:"decision",
+        children:[
+          { id:"ai_discovery", label:"AI-Driven\nAntibiotic Discovery", type:"leaf", aiRange:[55,75],
+            summary:"Machine learning models screening billions of molecular compounds for antibiotic activity — dramatically accelerating the drug discovery phase. MIT/Harvard Broad Institute used AI to discover Halicin in 2020, a structurally novel antibiotic effective against drug-resistant strains. CARB-X has funded 17 AI-assisted antibiotic programs. Discovery phase compressed from years to months.",
+            fin:[45,65],tax:[50,70],energy:[55,75],liv:[72,92],gov:[48,68],priv:[52,72],env:[52,72],com:[65,85]},
+          { id:"pull_incentives", label:"Market Pull\nIncentives", type:"leaf", aiRange:[52,72],
+            summary:"Government-backed 'pull incentives' — guaranteed market commitments paying developers a fixed sum upon antibiotic approval regardless of sales volume. UK Subscription Model pilot (2021) pays up to £10M annually for novel antibiotics. Addresses broken economics where stewardship — using antibiotics as little as possible — destroys commercial viability. G7 endorsed pull incentives in 2023.",
+            fin:[38,58],tax:[45,65],energy:[55,75],liv:[75,95],gov:[42,62],priv:[55,75],env:[52,72],com:[68,88]},
+          { id:"open_source_drug", label:"Open-Source\nAntibiotic Development", type:"leaf", aiRange:[42,62],
+            summary:"Publicly funded open-source antibiotic development removing intellectual property barriers — all research data shared globally. DNDi (Drugs for Neglected Diseases initiative) model applied to AMR. Eliminates commercial viability problem by removing profit motive from the equation. Requires sustained public funding. Slow adoption by pharmaceutical industry.",
+            fin:[35,55],tax:[48,68],energy:[52,72],liv:[70,90],gov:[38,58],priv:[28,48],env:[52,72],com:[72,92]},
+        ]},
+      { id:"prevention", label:"Prevention\n& Stewardship", type:"decision",
+        children:[
+          { id:"agri_amr", label:"Agricultural AMR\nReduction", type:"leaf", aiRange:[48,68],
+            summary:"Computational tools monitoring and enforcing agricultural antibiotic use — the largest single source of AMR globally. WHO estimates 50–80% of antibiotic use is in livestock. Precision livestock management systems can reduce prophylactic antibiotic use by 30–50% without reducing animal health outcomes. EU banned prophylactic agricultural antibiotic use in 2022.",
+            fin:[45,65],tax:[48,68],energy:[52,72],liv:[68,88],gov:[42,62],priv:[40,60],env:[65,85],com:[62,82]},
+          { id:"stewardship_ai", label:"Hospital Stewardship\nAI Systems", type:"leaf", aiRange:[58,75],
+            summary:"AI systems embedded in hospital prescribing workflows — flagging inappropriate antibiotic choices, suggesting narrower-spectrum alternatives, alerting when culture results allow de-escalation. Studies show AI stewardship systems reduce broad-spectrum antibiotic use by 25–40% without increasing treatment failure. 3–5 year adoption timeline in well-resourced health systems.",
+            fin:[58,78],tax:[52,72],energy:[55,75],liv:[75,95],gov:[55,75],priv:[58,78],env:[55,75],com:[68,88]},
+          { id:"phage_therapy", label:"Computational\nPhage Therapy", type:"leaf", aiRange:[40,62],
+            summary:"AI-matching bacteriophage viruses to specific resistant bacterial strains — enabling personalised phage therapy as an alternative to antibiotics. Phage therapy has no resistance development pathway equivalent to antibiotics. Computational matching reduces therapeutic development time from months to days. Still largely experimental — FDA has granted compassionate use in terminal AMR cases.",
+            fin:[32,52],tax:[42,62],energy:[50,70],liv:[65,85],gov:[30,50],priv:[38,58],env:[58,78],com:[60,80]},
+        ]},
+    ]
+  }
+}
+
+]; // end SCENARIOS array
+
+// ── TREE TRAVERSAL ────────────────────────────────────────────
+function findNode(tree, id) {
+  if (!tree) return null;
+  if (tree.id===id) return tree;
+  if (tree.children) for (const c of tree.children) {
+    const found=findNode(c,id);
+    if (found) return found;
   }
   return null;
 }
 
-// ─── LAYOUT ENGINE ────────────────────────────────────────────
-function computeLayout(selL1, selL2) {
+// ── LAYOUT ENGINE ─────────────────────────────────────────────
+function computeLayout(root, selL1, selL2) {
   const nodes=[], edges=[];
+  nodes.push({id:"root",x:SVG_W/2,y:LY[0],w:RW,h:RH,level:0,type:"root",label:root.label});
 
-  nodes.push({id:"root", x:SVG_W/2, y:LY[0], w:RW, h:RH, level:0, type:"root", label:"Alberta Data Centres\nEnergy & Water"});
-
-  const l1Xs = groupPos(SVG_W/2, TREE.children.length, SVG_W/TREE.children.length);
-  TREE.children.forEach((n,i)=>{
+  const l1s=root.children;
+  const l1Xs=groupPos(SVG_W/2,l1s.length,SVG_W/l1s.length);
+  l1s.forEach((n,i)=>{
     const x=l1Xs[i];
-    nodes.push({id:n.id, x, y:LY[1], w:NW, h:NH, level:1, type:n.type, label:n.label});
-    edges.push({from:"root",to:n.id, fx:SVG_W/2,fy:LY[0]+RH/2, tx:x,ty:LY[1]-NH/2});
+    nodes.push({id:n.id,x,y:LY[1],w:NW,h:NH,level:1,type:n.type,label:n.label});
+    edges.push({from:"root",to:n.id,fx:SVG_W/2,fy:LY[0]+RH/2,tx:x,ty:LY[1]-NH/2});
   });
 
-  if (selL1) {
-    const l1n=TREE.children.find(n=>n.id===selL1);
+  if(selL1){
+    const l1n=l1s.find(n=>n.id===selL1);
     const l1p=nodes.find(n=>n.id===selL1);
-    if (l1n?.children) {
-      const xs=groupPos(l1p.x, l1n.children.length, 215);
+    if(l1n?.children){
+      const xs=groupPos(l1p.x,l1n.children.length,215);
       l1n.children.forEach((n,i)=>{
         const x=xs[i];
-        nodes.push({id:n.id, x, y:LY[2], w:NW, h:NH, level:2, type:n.type, label:n.label, aiRange:n.aiRange});
-        edges.push({from:selL1,to:n.id, fx:l1p.x,fy:LY[1]+NH/2, tx:x,ty:LY[2]-NH/2});
+        nodes.push({id:n.id,x,y:LY[2],w:NW,h:NH,level:2,type:n.type,label:n.label,aiRange:n.aiRange});
+        edges.push({from:selL1,to:n.id,fx:l1p.x,fy:LY[1]+NH/2,tx:x,ty:LY[2]-NH/2});
       });
     }
   }
 
-  if (selL1&&selL2) {
-    const l1n=TREE.children.find(n=>n.id===selL1);
+  if(selL1&&selL2){
+    const l1n=l1s.find(n=>n.id===selL1);
     const l2n=l1n?.children?.find(n=>n.id===selL2);
     const l2p=nodes.find(n=>n.id===selL2);
-    if (l2n?.children&&l2p) {
-      const xs=groupPos(l2p.x, l2n.children.length, 195);
+    if(l2n?.children&&l2p){
+      const xs=groupPos(l2p.x,l2n.children.length,195);
       l2n.children.forEach((n,i)=>{
         const x=xs[i];
-        nodes.push({id:n.id, x, y:LY[3], w:NW, h:NH, level:3, type:n.type, label:n.label, aiRange:n.aiRange});
-        edges.push({from:selL2,to:n.id, fx:l2p.x,fy:LY[2]+NH/2, tx:x,ty:LY[3]-NH/2});
+        nodes.push({id:n.id,x,y:LY[3],w:NW,h:NH,level:3,type:n.type,label:n.label,aiRange:n.aiRange});
+        edges.push({from:selL2,to:n.id,fx:l2p.x,fy:LY[2]+NH/2,tx:x,ty:LY[3]-NH/2});
       });
     }
   }
-
   return {nodes,edges};
 }
 
-function svgHeight(selL1, selL2) {
-  if (!selL1) return LY[1]+NH/2+44;
-  const l1=TREE.children.find(n=>n.id===selL1);
-  if (!l1?.children) return LY[1]+NH/2+44;
+function svgHeight(root,selL1,selL2){
+  if(!selL1) return LY[1]+NH/2+44;
+  const l1=root.children.find(n=>n.id===selL1);
+  if(!l1?.children) return LY[1]+NH/2+44;
   const hasL3=selL2&&l1.children.find(n=>n.id===selL2)?.children?.length>0;
   return hasL3?LY[3]+NH/2+44:LY[2]+NH/2+44;
 }
 
-// ─── SVG COMPONENTS ──────────────────────────────────────────
-function Edge({fx,fy,tx,ty,active}) {
+// ── SVG COMPONENTS ────────────────────────────────────────────
+function Edge({fx,fy,tx,ty,active}){
   const my=(fy+ty)/2;
-  const d=`M${fx},${fy} C${fx},${my} ${tx},${my} ${tx},${ty}`;
-  return <path d={d} fill="none" stroke={active?"#707088":"#0E0E1A"} strokeWidth={active?1.6:0.7} style={{transition:"all 0.3s"}}/>;
+  const d="M"+fx+","+fy+" C"+fx+","+my+" "+tx+","+my+" "+tx+","+ty;
+  return React.createElement("path",{d,fill:"none",stroke:active?"#707088":"#0E0E1A",strokeWidth:active?1.6:0.7,style:{transition:"all 0.3s"}});
 }
 
-function TreeNode({id,x,y,w,h,level,type,label,aiRange,selected,onPath,onClick}) {
+function TreeNode({id,x,y,w,h,level,type,label,aiRange,selected,onPath,onClick}){
   const [hov,setHov]=useState(false);
-  const isRoot=type==="root", isLeaf=type==="leaf";
+  const isRoot=type==="root",isLeaf=type==="leaf";
   const rc=aiRange?rangeColor(aiRange):null;
   const rx=isRoot?16:isLeaf?12:8;
-
-  let stroke=C.dim, fill=C.deep, tc=C.muted;
-  if (isRoot)        {stroke=C.silver; fill="#09091A"; tc=C.ice;}
-  else if (selected) {stroke=rc||C.ice; fill=rc?`${rc}12`:"#0C0C1C"; tc=rc||C.ice;}
-  else if (onPath)   {stroke=rc?`${rc}80`:C.silver; fill="#09090F"; tc=rc?`${rc}BB`:C.silver;}
-  else if (hov)      {stroke="#404055"; fill="#0C0C14"; tc="#8888A0";}
-
+  let stroke=C.dim,fill=C.deep,tc=C.muted;
+  if(isRoot){stroke=C.silver;fill="#09091A";tc=C.ice;}
+  else if(selected){stroke=rc||C.ice;fill=rc?rc+"12":"#0C0C1C";tc=rc||C.ice;}
+  else if(onPath){stroke=rc?rc+"80":C.silver;fill="#09090F";tc=rc?rc+"BB":C.silver;}
+  else if(hov){stroke="#404055";fill="#0C0C14";tc="#8888A0";}
   const lines=label.split("\n");
   const lineH=isRoot?13.5:12.5;
   const ty0=y-((lines.length-1)*lineH)/2+(isRoot?4:3);
+  const els=[];
+  if(selected||onPath) els.push(React.createElement("rect",{key:"glow",x:x-w/2-7,y:y-h/2-7,width:w+14,height:h+14,rx:rx+7,fill:"none",stroke:rc||C.silver,strokeWidth:0.5,opacity:0.13}));
+  els.push(React.createElement("rect",{key:"body",x:x-w/2,y:y-h/2,width:w,height:h,rx,fill,stroke,strokeWidth:selected?1.7:hov?1.0:0.75,style:{transition:"all 0.2s"}}));
+  if(isLeaf&&aiRange){
+    els.push(React.createElement("rect",{key:"badge",x:x-w/2,y:y-h/2-20,width:w,height:20,rx:5,fill:rc+"10",stroke:rc+"40",strokeWidth:0.7}));
+    els.push(React.createElement("text",{key:"badgetxt",x,y:y-h/2-6,textAnchor:"middle",fill:rc,fontSize:8,fontFamily:"IBM Plex Mono,monospace",fontWeight:"600"},rangeStr(aiRange)+" · "+rangeLabel(aiRange)));
+  }
+  if(isRoot) els.push(React.createElement("text",{key:"roottag",x,y:y-h/2+9,textAnchor:"middle",fill:"#222235",fontSize:6.5,fontFamily:"IBM Plex Mono,monospace",letterSpacing:1.5},"DECISION ROOT"));
+  lines.forEach((line,i)=>els.push(React.createElement("text",{key:"t"+i,x,y:ty0+i*lineH,textAnchor:"middle",fill:tc,fontSize:isRoot?13:11.5,fontFamily:"Barlow Condensed,sans-serif",fontWeight:isRoot?800:(selected||onPath)?700:600,letterSpacing:0.5,style:{transition:"fill 0.2s"}},line.toUpperCase())));
+  if(!isLeaf&&!isRoot) els.push(React.createElement("text",{key:"arr",x,y:y+h/2-6,textAnchor:"middle",fill:(onPath||selected)?stroke:"#18181E",fontSize:7,fontFamily:"IBM Plex Mono,monospace"},"▼"));
+  return React.createElement("g",{style:{cursor:"pointer"},onClick:()=>onClick(id),onMouseEnter:()=>setHov(true),onMouseLeave:()=>setHov(false)},els);
+}
 
-  return (
-    <g style={{cursor:"pointer"}} onClick={()=>onClick(id)}
-       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}>
-      {(selected||onPath)&&(
-        <rect x={x-w/2-7} y={y-h/2-7} width={w+14} height={h+14} rx={rx+7}
-          fill="none" stroke={rc||C.silver} strokeWidth={0.5} opacity={0.13}/>
-      )}
-      <rect x={x-w/2} y={y-h/2} width={w} height={h} rx={rx}
-        fill={fill} stroke={stroke} strokeWidth={selected?1.7:hov?1.0:0.75}
-        style={{transition:"all 0.2s"}}/>
-
-      {/* Range badge on leaf nodes — NO specific percentage */}
-      {isLeaf&&aiRange&&(
-        <g>
-          <rect x={x-w/2} y={y-h/2-20} width={w} height={20} rx={5}
-            fill={`${rc}10`} stroke={`${rc}40`} strokeWidth={0.7}/>
-          <text x={x} y={y-h/2-6} textAnchor="middle"
-            fill={rc} fontSize={8.5} fontFamily="IBM Plex Mono,monospace" fontWeight="600">
-            {rangeStr(aiRange)} est. · {rangeLabel(aiRange)}
-          </text>
-        </g>
-      )}
-
-      {isRoot&&(
-        <text x={x} y={y-h/2+9} textAnchor="middle" fill="#222235"
-          fontSize={6.5} fontFamily="IBM Plex Mono,monospace" letterSpacing={1.5}>
-          DECISION ROOT
-        </text>
-      )}
-      {lines.map((line,i)=>(
-        <text key={i} x={x} y={ty0+i*lineH} textAnchor="middle" fill={tc}
-          fontSize={isRoot?13:11.5} fontFamily="Barlow Condensed,sans-serif"
-          fontWeight={isRoot?800:(selected||onPath)?700:600}
-          letterSpacing={0.5} style={{transition:"fill 0.2s"}}>
-          {line.toUpperCase()}
-        </text>
-      ))}
-      {!isLeaf&&!isRoot&&(
-        <text x={x} y={y+h/2-6} textAnchor="middle"
-          fill={onPath||selected?stroke:"#18181E"}
-          fontSize={7} fontFamily="IBM Plex Mono,monospace">▼</text>
-      )}
-    </g>
+function ImpactBar({label,range}){
+  const m=mid(range),c=impactColor(m);
+  return React.createElement("div",{style:{marginBottom:"7px"}},
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"3px"}},
+      React.createElement("span",{style:{fontSize:"10px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}},label),
+      React.createElement("span",{style:{fontSize:"9.5px",fontFamily:"IBM Plex Mono,monospace",color:c,fontWeight:600}},rangeStr(range))
+    ),
+    React.createElement("div",{style:{height:"5px",background:"#0A0A0A",borderRadius:"3px",position:"relative",overflow:"hidden"}},
+      React.createElement("div",{style:{position:"absolute",top:0,bottom:0,left:range[0]+"%",width:(range[1]-range[0])+"%",background:c,opacity:0.75,boxShadow:"0 0 5px "+c+"40",transition:"all 0.6s ease"}})
+    )
   );
 }
 
-// ─── IMPACT BAR — qualitative label, no specific number ───────
-function ImpactBar({label, range}) {
-  const m=mid(range);
-  const c=impactColor(m);
-  const l=impactLabel(m);
-  return (
-    <div style={{marginBottom:"8px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:"3px"}}>
-        <span style={{fontSize:"10px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>{label}</span>
-        <span style={{fontSize:"9.5px",fontFamily:"IBM Plex Mono,monospace",color:c,fontWeight:600}}>
-          {rangeStr(range)} · {l}
-        </span>
-      </div>
-      {/* Bar shows the range band, not a specific value */}
-      <div style={{height:"5px",background:"#0A0A0A",borderRadius:"3px",position:"relative",overflow:"hidden"}}>
-        {/* Low end filler */}
-        <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${range[0]}%`,background:"#111"}}/>
-        {/* Range band */}
-        <div style={{
-          position:"absolute", top:0, bottom:0,
-          left:`${range[0]}%`, width:`${range[1]-range[0]}%`,
-          background:c, opacity:0.7,
-          boxShadow:`0 0 5px ${c}40`,
-          transition:"all 0.6s ease"
-        }}/>
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:"7.5px",color:"#1A1A28",fontFamily:"IBM Plex Mono,monospace",marginTop:"2px"}}>
-        <span>0%</span><span>50%</span><span>100%</span>
-      </div>
-    </div>
-  );
-}
-
-// ─── DETAIL PANEL ────────────────────────────────────────────
-function Detail({node, human, setHuman}) {
-  if (!node) return null;
+function Detail({node,human,setHuman}){
+  if(!node) return null;
   const m=mid(node.aiRange);
   const diff=Math.abs(human-m);
   const ac=diff<=12?C.green:diff<=28?C.yellow:C.red;
-  const al=diff<=12?"Your estimate aligns with AI range":diff<=28?"Your estimate diverges moderately":"Your estimate diverges significantly";
-
-  return (
-    <div style={{marginTop:"18px",background:C.deep,border:`1px solid ${C.border}`,borderRadius:"8px",padding:"22px",animation:"fadeIn 0.3s ease"}}>
-
-      {/* Header */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"14px",marginBottom:"13px"}}>
-        <div>
-          <div style={{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:"5px"}}>
-            // SELECTED OUTCOME
-          </div>
-          <h3 style={{fontFamily:"Barlow Condensed,sans-serif",fontSize:"1.6rem",fontWeight:800,color:C.ice,textTransform:"uppercase",letterSpacing:"0.04em",margin:0,lineHeight:1.15}}>
-            {node.label.replace("\n"," ")}
-          </h3>
-        </div>
-
-        {/* AI range badge */}
-        <div style={{flexShrink:0,background:`${rangeColor(node.aiRange)}10`,border:`1px solid ${rangeColor(node.aiRange)}35`,borderRadius:"6px",padding:"10px 16px",textAlign:"center",minWidth:"100px"}}>
-          <div style={{fontSize:"7.5px",color:rangeColor(node.aiRange),fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.1em",marginBottom:"3px"}}>
-            ESTIMATED RANGE
-          </div>
-          <div style={{fontSize:"1.5rem",fontFamily:"Barlow Condensed,sans-serif",fontWeight:800,color:rangeColor(node.aiRange),lineHeight:1}}>
-            {rangeStr(node.aiRange)}
-          </div>
-          <div style={{fontSize:"9px",color:rangeColor(node.aiRange),fontFamily:"Barlow Condensed,sans-serif",fontWeight:700,marginTop:"2px"}}>
-            {rangeLabel(node.aiRange)}
-          </div>
-        </div>
-      </div>
-
-      {/* Range bar for AI estimate */}
-      <div style={{background:"#060606",border:`1px solid ${C.border}`,borderRadius:"5px",padding:"10px 14px",marginBottom:"16px"}}>
-        <div style={{fontSize:"8px",color:"#383840",fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"6px"}}>
-          // AI LIKELIHOOD ESTIMATE RANGE — based on available research
-        </div>
-        <div style={{height:"8px",background:"#0C0C0C",borderRadius:"4px",position:"relative",overflow:"hidden",marginBottom:"4px"}}>
-          <div style={{position:"absolute",top:0,bottom:0,left:`${node.aiRange[0]}%`,width:`${node.aiRange[1]-node.aiRange[0]}%`,
-            background:`linear-gradient(to right,${rangeColor(node.aiRange)}60,${rangeColor(node.aiRange)})`,
-            boxShadow:`0 0 8px ${rangeColor(node.aiRange)}40`,transition:"all 0.6s ease"}}/>
-        </div>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:"8px",color:"#252530",fontFamily:"IBM Plex Mono,monospace"}}>
-          <span>Less likely →</span>
-          <span style={{color:rangeColor(node.aiRange)}}>{node.aiRange[0]}% — {node.aiRange[1]}%</span>
-          <span>← More likely</span>
-        </div>
-      </div>
-
-      <p style={{fontSize:"12px",color:C.muted,lineHeight:1.78,marginBottom:"18px"}}>{node.summary}</p>
-
-      {/* Two-column */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"24px"}}>
-
-        {/* Impact dimensions */}
-        <div>
-          <div style={{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"11px"}}>
-            // IMPACT DIMENSIONS — estimated ranges
-          </div>
-          <ImpactBar label="Financial Cost"      range={node.fin}/>
-          <ImpactBar label="Tax Impact"          range={node.tax}/>
-          <ImpactBar label="Energy Prices"       range={node.energy}/>
-          <ImpactBar label="Standard of Living"  range={node.liv}/>
-          <ImpactBar label="Gov. Timeline"       range={node.gov}/>
-          <ImpactBar label="Private Sector"      range={node.priv}/>
-          <ImpactBar label="Environmental"       range={node.env}/>
-          <ImpactBar label="Community Benefit"   range={node.com}/>
-        </div>
-
-        {/* Human assessment */}
-        <div>
-          <div style={{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"11px"}}>
-            // YOUR ASSESSMENT
-          </div>
-
-          <div style={{background:"#060606",border:`1px solid ${C.border}`,borderRadius:"6px",padding:"14px",marginBottom:"14px"}}>
-            <div style={{fontSize:"8px",color:"#303040",fontFamily:"IBM Plex Mono,monospace",marginBottom:"8px",letterSpacing:"0.06em"}}>
-              Set your own likelihood estimate and compare with the AI range
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:"8px"}}>
-              <span style={{fontSize:"9.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>YOUR ESTIMATE</span>
-              <span style={{fontSize:"1.4rem",fontFamily:"Barlow Condensed,sans-serif",fontWeight:800,
-                color:human>=65?C.green:human>=40?C.yellow:C.red,lineHeight:1}}>
-                {human}%
-              </span>
-            </div>
-            <input type="range" min="0" max="100" value={human}
-              onChange={e=>setHuman(Number(e.target.value))}
-              style={{width:"100%",accentColor:human>=65?C.green:human>=40?C.yellow:C.red,cursor:"pointer",marginBottom:"10px"}}/>
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:"8px",color:"#1C1C28",fontFamily:"IBM Plex Mono,monospace",marginBottom:"12px"}}>
-              <span>Less likely</span><span>More likely</span>
-            </div>
-            <div style={{background:`${ac}08`,border:`1px solid ${ac}25`,borderRadius:"4px",padding:"8px 10px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"3px"}}>
-                <div style={{width:"6px",height:"6px",borderRadius:"50%",background:ac,flexShrink:0}}/>
-                <span style={{fontSize:"9.5px",color:ac,fontFamily:"IBM Plex Mono,monospace"}}>{al}</span>
-              </div>
-              <span style={{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>
-                AI range: {rangeStr(node.aiRange)} · Your estimate: {human}%
-              </span>
-            </div>
-          </div>
-
-          {/* Scale */}
-          <div>
-            <div style={{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"8px"}}>
-              // LIKELIHOOD SCALE
-            </div>
-            {[[C.green,"≥65% range — Favourable"],[C.yellow,"40–64% range — Moderate"],[C.red,"<40% range — Challenging"]].map(([c,l])=>(
-              <div key={l} style={{display:"flex",alignItems:"center",gap:"7px",marginBottom:"6px"}}>
-                <div style={{width:"22px",height:"4px",borderRadius:"2px",background:c,flexShrink:0}}/>
-                <span style={{fontSize:"9px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>{l}</span>
-              </div>
-            ))}
-          </div>
-
-          <div style={{marginTop:"12px",fontSize:"8px",color:"#141420",fontFamily:"IBM Plex Mono,monospace",lineHeight:1.65,background:"#060606",border:`1px solid ${C.border}`,borderRadius:"4px",padding:"10px"}}>
-            <span style={{color:"#28280A"}}>⚠ </span>
-            Ranges represent estimated likelihood based on available research — not actuarial calculations. All estimates subject to change. Not professional advice.
-          </div>
-        </div>
-      </div>
-    </div>
+  const al=diff<=12?"Aligns with AI range":diff<=28?"Moderate divergence":"Significant divergence";
+  const rc=rangeColor(node.aiRange);
+  return React.createElement("div",{style:{marginTop:"18px",background:C.deep,border:"1px solid "+C.border,borderRadius:"8px",padding:"22px",animation:"fadeIn 0.3s ease"}},
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"14px",marginBottom:"13px"}},
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:"5px"}},"// SELECTED OUTCOME"),
+        React.createElement("h3",{style:{fontFamily:"Barlow Condensed,sans-serif",fontSize:"1.5rem",fontWeight:800,color:C.ice,textTransform:"uppercase",letterSpacing:"0.04em",margin:0,lineHeight:1.15}},node.label.replace("\n"," "))
+      ),
+      React.createElement("div",{style:{flexShrink:0,background:rc+"10",border:"1px solid "+rc+"35",borderRadius:"6px",padding:"10px 16px",textAlign:"center",minWidth:"100px"}},
+        React.createElement("div",{style:{fontSize:"7.5px",color:rc,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.1em",marginBottom:"3px"}},"ESTIMATED RANGE"),
+        React.createElement("div",{style:{fontSize:"1.4rem",fontFamily:"Barlow Condensed,sans-serif",fontWeight:800,color:rc,lineHeight:1}},rangeStr(node.aiRange)),
+        React.createElement("div",{style:{fontSize:"9px",color:rc,fontFamily:"Barlow Condensed,sans-serif",fontWeight:700,marginTop:"2px"}},rangeLabel(node.aiRange))
+      )
+    ),
+    React.createElement("p",{style:{fontSize:"12px",color:C.muted,lineHeight:1.78,marginBottom:"18px"}},node.summary),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"24px"}},
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"11px"}},"// IMPACT DIMENSIONS — estimated ranges"),
+        React.createElement(ImpactBar,{label:"Financial Cost",range:node.fin}),
+        React.createElement(ImpactBar,{label:"Tax Impact",range:node.tax}),
+        React.createElement(ImpactBar,{label:"Energy / Resource",range:node.energy}),
+        React.createElement(ImpactBar,{label:"Standard of Living",range:node.liv}),
+        React.createElement(ImpactBar,{label:"Gov. / Regulatory Timeline",range:node.gov}),
+        React.createElement(ImpactBar,{label:"Private Sector",range:node.priv}),
+        React.createElement(ImpactBar,{label:"Environmental",range:node.env}),
+        React.createElement(ImpactBar,{label:"Community Benefit",range:node.com})
+      ),
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:"8.5px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"11px"}},"// YOUR ASSESSMENT"),
+        React.createElement("div",{style:{background:"#060606",border:"1px solid "+C.border,borderRadius:"6px",padding:"14px",marginBottom:"14px"}},
+          React.createElement("div",{style:{fontSize:"8px",color:"#303040",fontFamily:"IBM Plex Mono,monospace",marginBottom:"8px"}},"Set your own estimate and compare with the AI range"),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"8px"}},
+            React.createElement("span",{style:{fontSize:"9.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}},"YOUR ESTIMATE"),
+            React.createElement("span",{style:{fontSize:"1.3rem",fontFamily:"Barlow Condensed,sans-serif",fontWeight:800,color:human>=65?C.green:human>=40?C.yellow:C.red,lineHeight:1}},human+"%")
+          ),
+          React.createElement("input",{type:"range",min:0,max:100,value:human,onChange:e=>setHuman(Number(e.target.value)),style:{width:"100%",accentColor:human>=65?C.green:human>=40?C.yellow:C.red,cursor:"pointer",marginBottom:"10px"}}),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"8px",color:"#1C1C28",fontFamily:"IBM Plex Mono,monospace",marginBottom:"12px"}},
+            React.createElement("span",null,"Less likely"),React.createElement("span",null,"More likely")
+          ),
+          React.createElement("div",{style:{background:ac+"08",border:"1px solid "+ac+"25",borderRadius:"4px",padding:"8px 10px"}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"6px",marginBottom:"3px"}},
+              React.createElement("div",{style:{width:"6px",height:"6px",borderRadius:"50%",background:ac,flexShrink:0}}),
+              React.createElement("span",{style:{fontSize:"9.5px",color:ac,fontFamily:"IBM Plex Mono,monospace"}},al)
+            ),
+            React.createElement("span",{style:{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}},"AI range: "+rangeStr(node.aiRange)+" · Your estimate: "+human+"%")
+          )
+        ),
+        React.createElement("div",{style:{fontSize:"8px",color:"#141420",fontFamily:"IBM Plex Mono,monospace",lineHeight:1.65,background:"#060606",border:"1px solid "+C.border,borderRadius:"4px",padding:"10px"}},
+          React.createElement("span",{style:{color:"#28280A"}},"⚠ "),
+          "Ranges represent estimated likelihood based on available research — not actuarial calculations. All estimates subject to change. Not professional advice."
+        )
+      )
+    )
   );
 }
 
-// ─── MAIN ────────────────────────────────────────────────────
-function AMuNTree() {
-  const [selL1,   setSelL1]   = useState(null);
-  const [selL2,   setSelL2]   = useState(null);
-  const [selLeaf, setSelLeaf] = useState(null);
-  const [human,   setHuman]   = useState(50);
-  const [discOpen,setDiscOpen]= useState(false);
+// ── MAIN APP ─────────────────────────────────────────────────
+function AMuNTree(){
+  const [scenIdx,setScenIdx]=useState(0);
+  const [selL1,setSelL1]=useState(null);
+  const [selL2,setSelL2]=useState(null);
+  const [selLeaf,setSelLeaf]=useState(null);
+  const [human,setHuman]=useState(50);
+  const [discOpen,setDiscOpen]=useState(false);
 
-  const {nodes,edges} = computeLayout(selL1,selL2);
-  const h = svgHeight(selL1,selL2);
-  const pathSet = new Set(["root",...[selL1,selL2,selLeaf].filter(Boolean)]);
+  const scen=SCENARIOS[scenIdx];
+  const root=scen.root;
 
-  function handleClick(id) {
-    const nd=nodes.find(n=>n.id===id);
-    if (!nd) return;
-    if (id==="root") {setSelL1(null);setSelL2(null);setSelLeaf(null);setHuman(50);return;}
-    if (nd.level===1) {setSelL1(selL1===id?null:id);setSelL2(null);setSelLeaf(null);setHuman(50);return;}
-    if (nd.level===2) {
-      const fn=findNode(id);
-      if (fn?.type==="leaf") {setSelLeaf(id);setHuman(50);return;}
-      setSelL2(selL2===id?null:id);setSelLeaf(null);setHuman(50);return;
-    }
-    if (nd.level===3) {setSelLeaf(id);setHuman(50);}
+  function switchScenario(idx){
+    setScenIdx(idx);
+    setSelL1(null);setSelL2(null);setSelLeaf(null);setHuman(50);
   }
 
-  const leafData=selLeaf?findNode(selLeaf):null;
+  const {nodes,edges}=computeLayout(root,selL1,selL2);
+  const h=svgHeight(root,selL1,selL2);
+  const pathSet=new Set(["root",...[selL1,selL2,selLeaf].filter(Boolean)]);
 
-  return (
-    <div style={{background:C.void,minHeight:"100vh",color:C.text,fontFamily:"IBM Plex Sans,sans-serif",fontWeight:300}}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@300;400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
-        *{box-sizing:border-box;}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-        input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;background:#111;outline:none;}
-        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:currentColor;cursor:pointer;}
-        ::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-thumb{background:#1C1C2C;}
-        svg text{user-select:none;-webkit-user-select:none;}
-      `}</style>
+  function handleClick(id){
+    const nd=nodes.find(n=>n.id===id);
+    if(!nd) return;
+    if(id==="root"){setSelL1(null);setSelL2(null);setSelLeaf(null);setHuman(50);return;}
+    if(nd.level===1){setSelL1(selL1===id?null:id);setSelL2(null);setSelLeaf(null);setHuman(50);return;}
+    if(nd.level===2){
+      const fn=findNode(root,id);
+      if(fn?.type==="leaf"){setSelLeaf(id);setHuman(50);return;}
+      setSelL2(selL2===id?null:id);setSelLeaf(null);setHuman(50);return;
+    }
+    if(nd.level===3){setSelLeaf(id);setHuman(50);}
+  }
 
-      {/* Header */}
-      <div style={{position:"sticky",top:0,zIndex:100,background:"rgba(0,0,0,0.96)",borderBottom:`1px solid ${C.border}`,backdropFilter:"blur(20px)"}}>
-        <div style={{maxWidth:"1060px",margin:"0 auto",padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"8px",flexWrap:"wrap"}}>
-          <div>
-            <span style={{fontFamily:"Barlow Condensed,sans-serif",fontSize:"1.2rem",fontWeight:800,color:C.text,textTransform:"uppercase",letterSpacing:"0.1em"}}>AMuN</span>
-            <span style={{fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#252535",letterSpacing:"0.12em",textTransform:"uppercase",marginLeft:"10px"}}>Decision Navigator · PTH Meridian</span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
-            <span style={{fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#1E1E2E"}}>Alberta · Energy + Data Centres · 2026</span>
-            {selL1&&(
-              <button onClick={()=>{setSelL1(null);setSelL2(null);setSelLeaf(null);setHuman(50);}}
-                style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",padding:"3px 8px",cursor:"pointer",letterSpacing:"0.1em",borderRadius:"3px"}}>
-                RESTART
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+  const leafData=selLeaf?findNode(root,selLeaf):null;
 
-      <div style={{maxWidth:"1060px",margin:"0 auto",padding:"16px 16px 44px"}}>
+  return React.createElement("div",{style:{background:C.void,minHeight:"100vh",color:C.text,fontFamily:"IBM Plex Sans,sans-serif",fontWeight:300}},
 
-        {/* Disclaimer */}
-        <div style={{background:"rgba(251,191,36,0.03)",border:"1px solid rgba(251,191,36,0.15)",borderRadius:"4px",padding:"9px 13px",marginBottom:"14px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"10px"}}>
-          <div style={{fontSize:"9px",fontFamily:"IBM Plex Mono,monospace",color:"#35350A",lineHeight:1.6}}>
-            <span style={{color:C.yellow,fontWeight:600}}>⚠ RANGES ONLY — grounded in official StatsCan & NRCan data · </span>
-            {discOpen?DISCLAIMER:DISCLAIMER.slice(0,100)+"…"}
-          </div>
-          <button onClick={()=>setDiscOpen(v=>!v)} style={{background:"none",border:"1px solid rgba(251,191,36,0.18)",color:C.yellow,padding:"2px 7px",cursor:"pointer",fontFamily:"IBM Plex Mono,monospace",fontSize:"7.5px",whiteSpace:"nowrap",borderRadius:"2px",flexShrink:0}}>
-            {discOpen?"HIDE":"MORE"}
-          </button>
-        </div>
+    // ── HEADER ─────────────────────────────────────────────
+    React.createElement("div",{style:{position:"sticky",top:0,zIndex:100,background:"rgba(0,0,0,0.96)",borderBottom:"1px solid "+C.border,backdropFilter:"blur(20px)"}},
+      React.createElement("div",{style:{maxWidth:"1060px",margin:"0 auto",padding:"10px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"8px",flexWrap:"wrap"}},
+        React.createElement("div",null,
+          React.createElement("span",{style:{fontFamily:"Barlow Condensed,sans-serif",fontSize:"1.2rem",fontWeight:800,color:C.text,textTransform:"uppercase",letterSpacing:"0.1em"}},"AMuN"),
+          React.createElement("span",{style:{fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#252535",letterSpacing:"0.12em",textTransform:"uppercase",marginLeft:"10px"}},"Decision Navigator · PTH Meridian")
+        ),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:"8px"}},
+          selL1&&React.createElement("button",{onClick:()=>{setSelL1(null);setSelL2(null);setSelLeaf(null);setHuman(50);},style:{background:"none",border:"1px solid "+C.border,color:C.muted,fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",padding:"3px 8px",cursor:"pointer",letterSpacing:"0.1em",borderRadius:"3px"}},"RESTART")
+        )
+      )
+    ),
 
-        {/* Instruction */}
-        <div style={{textAlign:"center",fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#181828",letterSpacing:"0.08em",marginBottom:"12px"}}>
-          Click any node to expand its branch · Ranges are estimates grounded in StatsCan, NRCan and CER public data — not precise predictions
-        </div>
+    React.createElement("div",{style:{maxWidth:"1060px",margin:"0 auto",padding:"14px 16px 44px"}},
 
-        {/* Tree */}
-        <div style={{background:C.deep,border:`1px solid ${C.border}`,borderRadius:"8px",overflow:"auto"}}>
-          <svg width={SVG_W} height={h} viewBox={`0 0 ${SVG_W} ${h}`}
-            style={{display:"block",width:"100%",minWidth:"620px"}}>
-            {[0,1,2,3].filter(lv=>nodes.some(n=>n.level===lv)).map(lv=>(
-              <line key={lv} x1={30} y1={LY[lv]} x2={SVG_W-30} y2={LY[lv]}
-                stroke="#0A0A14" strokeWidth={1} strokeDasharray="3 16"/>
-            ))}
-            {edges.map((e,i)=>(
-              <Edge key={i} fx={e.fx} fy={e.fy} tx={e.tx} ty={e.ty}
-                active={pathSet.has(e.from)&&pathSet.has(e.to)}/>
-            ))}
-            {nodes.map(n=>(
-              <TreeNode key={n.id} {...n}
-                selected={n.id===selL1||n.id===selL2||n.id===selLeaf}
-                onPath={pathSet.has(n.id)}
-                onClick={handleClick}/>
-            ))}
-            {[["ROOT",0],["PRIMARY CONCERN",1],selL1?["APPROACH",2]:null,selL2?["SPECIFIC OPTION",3]:null]
-              .filter(Boolean).map(([lbl,lv])=>(
-              <text key={lbl} x={22} y={LY[lv]-NH/2-12} fill="#121220"
-                fontSize={6.5} fontFamily="IBM Plex Mono,monospace" letterSpacing={1.2}>{lbl}</text>
-            ))}
-          </svg>
-        </div>
+      // ── DISCLAIMER ─────────────────────────────────────
+      React.createElement("div",{style:{background:"rgba(251,191,36,0.03)",border:"1px solid rgba(251,191,36,0.15)",borderRadius:"4px",padding:"8px 12px",marginBottom:"14px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:"10px"}},
+        React.createElement("div",{style:{fontSize:"9px",fontFamily:"IBM Plex Mono,monospace",color:"#35350A",lineHeight:1.6}},
+          React.createElement("span",{style:{color:"#fbbf24",fontWeight:600}},"⚠ ESTIMATED RANGES ONLY — grounded in official public data · "),
+          discOpen?DISCLAIMER:DISCLAIMER.slice(0,100)+"…"
+        ),
+        React.createElement("button",{onClick:()=>setDiscOpen(v=>!v),style:{background:"none",border:"1px solid rgba(251,191,36,0.18)",color:"#fbbf24",padding:"2px 7px",cursor:"pointer",fontFamily:"IBM Plex Mono,monospace",fontSize:"7.5px",whiteSpace:"nowrap",borderRadius:"2px",flexShrink:0}},discOpen?"HIDE":"MORE")
+      ),
 
-        {/* Legend */}
-        <div style={{display:"flex",gap:"20px",flexWrap:"wrap",justifyContent:"center",marginTop:"10px"}}>
-          {[[C.green,"≥65% range — Favourable"],[C.yellow,"40–64% range — Moderate"],[C.red,"<40% range — Challenging"]].map(([c,l])=>(
-            <div key={l} style={{display:"flex",alignItems:"center",gap:"5px"}}>
-              <div style={{width:"14px",height:"4px",borderRadius:"2px",background:c}}/>
-              <span style={{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}}>{l}</span>
-            </div>
-          ))}
-        </div>
+      // ── SCENARIO SELECTOR ──────────────────────────────
+      React.createElement("div",{style:{marginBottom:"16px"}},
+        React.createElement("div",{style:{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"8px"}},"// SELECT SCENARIO"),
+        React.createElement("div",{style:{display:"flex",gap:"6px",flexWrap:"wrap"}},
+          SCENARIOS.map((s,i)=>
+            React.createElement("button",{key:s.id,onClick:()=>switchScenario(i),style:{
+              background:i===scenIdx?"#0E0E1E":C.void,
+              border:"1px solid "+(i===scenIdx?C.silver:C.border),
+              borderRadius:"4px",padding:"8px 14px",cursor:"pointer",
+              textAlign:"left",transition:"all 0.18s",minWidth:"160px",
+              fontFamily:"IBM Plex Mono,monospace"
+            }},
+              React.createElement("div",{style:{fontSize:"8px",color:i===scenIdx?C.silver:C.muted,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:"2px"}},s.tag),
+              React.createElement("div",{style:{fontSize:"10px",color:i===scenIdx?C.ice:C.muted,fontWeight:500,lineHeight:1.3}},s.title)
+            )
+          )
+        )
+      ),
 
-        {selL1&&!selLeaf&&(
-          <div style={{marginTop:"10px",textAlign:"center",fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#181828",letterSpacing:"0.08em"}}>
-            ↑ Select a node to continue down the tree
-          </div>
-        )}
+      // ── ACTIVE SCENARIO HEADER ─────────────────────────
+      React.createElement("div",{style:{background:C.deep,border:"1px solid "+C.border,borderRadius:"6px",padding:"14px 18px",marginBottom:"12px"}},
+        React.createElement("div",{style:{fontSize:"8px",color:C.silver,fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:"5px"}},"// ACTIVE SCENARIO"),
+        React.createElement("div",{style:{fontFamily:"Barlow Condensed,sans-serif",fontSize:"1.3rem",fontWeight:800,color:C.ice,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:"4px"}},scen.title),
+        React.createElement("p",{style:{fontSize:"11px",color:C.muted,lineHeight:1.6,marginBottom:"6px"}},scen.subtitle),
+        React.createElement("div",{style:{fontSize:"8px",color:"#252530",fontFamily:"IBM Plex Mono,monospace",letterSpacing:"0.06em"}},"Sources: "+scen.sources)
+      ),
 
-        {leafData&&<Detail node={leafData} human={human} setHuman={setHuman}/>}
+      // ── INSTRUCTION ────────────────────────────────────
+      React.createElement("div",{style:{textAlign:"center",fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#181828",letterSpacing:"0.08em",marginBottom:"10px"}},"Click any node to expand its branch · Continue until you reach an outcome (range badge)"),
 
-        {/* Footer disclaimer */}
-        <div style={{marginTop:"28px",fontFamily:"IBM Plex Mono,monospace",fontSize:"7.5px",color:"#0C0C1A",lineHeight:1.7,textAlign:"center"}}>
-          Likelihood estimates are expressed as ranges only — grounded in Statistics Canada, NRCan, CER and Hydro-Québec public data.
-          Not actuarial calculations, precise predictions or professional advice. Context data current as of 2024–2026 and subject to change.
-          No user data collected or stored. © 2026 PTH Meridian · adel.tammam@pth-meridian.io
-        </div>
-      </div>
-    </div>
+      // ── TREE ───────────────────────────────────────────
+      React.createElement("div",{style:{background:C.deep,border:"1px solid "+C.border,borderRadius:"8px",overflow:"auto"}},
+        React.createElement("svg",{width:SVG_W,height:h,viewBox:"0 0 "+SVG_W+" "+h,style:{display:"block",width:"100%",minWidth:"620px"}},
+          [0,1,2,3].filter(lv=>nodes.some(n=>n.level===lv)).map(lv=>
+            React.createElement("line",{key:"gl"+lv,x1:30,y1:LY[lv],x2:SVG_W-30,y2:LY[lv],stroke:"#0A0A14",strokeWidth:1,strokeDasharray:"3 16"})
+          ),
+          edges.map((e,i)=>React.createElement(Edge,{key:"e"+i,fx:e.fx,fy:e.fy,tx:e.tx,ty:e.ty,active:pathSet.has(e.from)&&pathSet.has(e.to)})),
+          nodes.map(n=>React.createElement(TreeNode,{key:n.id,...n,selected:n.id===selL1||n.id===selL2||n.id===selLeaf,onPath:pathSet.has(n.id),onClick:handleClick})),
+          [["ROOT",0],["PRIMARY CONCERN",1],selL1?["APPROACH",2]:null,selL2?["SPECIFIC OPTION",3]:null].filter(Boolean).map(([lbl,lv])=>
+            React.createElement("text",{key:"lbl"+lv,x:22,y:LY[lv]-NH/2-12,fill:"#121220",fontSize:6.5,fontFamily:"IBM Plex Mono,monospace",letterSpacing:1.2},lbl)
+          )
+        )
+      ),
+
+      // ── LEGEND ─────────────────────────────────────────
+      React.createElement("div",{style:{display:"flex",gap:"20px",flexWrap:"wrap",justifyContent:"center",marginTop:"10px"}},
+        [[C.green,"≥65% range — Favourable"],[C.yellow,"40–64% range — Moderate"],[C.red,"<40% range — Challenging"]].map(([c,l])=>
+          React.createElement("div",{key:l,style:{display:"flex",alignItems:"center",gap:"5px"}},
+            React.createElement("div",{style:{width:"14px",height:"4px",borderRadius:"2px",background:c}}),
+            React.createElement("span",{style:{fontSize:"8.5px",color:C.muted,fontFamily:"IBM Plex Mono,monospace"}},l)
+          )
+        )
+      ),
+
+      selL1&&!selLeaf&&React.createElement("div",{style:{marginTop:"10px",textAlign:"center",fontFamily:"IBM Plex Mono,monospace",fontSize:"8.5px",color:"#181828",letterSpacing:"0.08em"}},"↑ Select a node to continue down the tree"),
+
+      leafData&&React.createElement(Detail,{node:leafData,human,setHuman}),
+
+      // ── FOOTER ─────────────────────────────────────────
+      React.createElement("div",{style:{marginTop:"28px",fontFamily:"IBM Plex Mono,monospace",fontSize:"7.5px",color:"#0C0C1A",lineHeight:1.7,textAlign:"center"}},"All likelihood estimates are expressed as ranges only and represent structured research-based assessments — not actuarial calculations or professional advice of any kind. No user data collected or stored. © 2026 PTH Meridian · adel.tammam@pth-meridian.io")
+    )
   );
 }
 
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(React.createElement(AMuNTree));
+    const domRoot = ReactDOM.createRoot(document.getElementById("root"));
+    domRoot.render(React.createElement(AMuNTree));
   </script>
 </body>
 </html>
