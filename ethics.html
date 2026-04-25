@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PTH Meridian — Collaboration and Innovation, Not Elimination of Employment. Our position on AI, human labor and the future of work." />
+  <title>PTH Meridian — Collaboration and Innovation, Not Elimination</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void:        #090605;
+      --deep:        #0F0A08;
+      --surface:     #181210;
+      --raised:      #201815;
+      --border:      #382518;
+      --border-hi:   #583828;
+      --coral:       #FF6B6B;
+      --coral-dim:   #8C3535;
+      --coral-glow:  rgba(255,107,107,0.10);
+      --warm:        #FF9066;
+      --text:        #F2E8DF;
+      --text-muted:  #7A5545;
+      --text-dim:    #3A2518;
+      --font-display:'Barlow Condensed', sans-serif;
+      --font-body:   'IBM Plex Sans', sans-serif;
+      --font-mono:   'IBM Plex Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--void); color: var(--text); font-family: var(--font-body); font-weight: 300; font-size: 16px; line-height: 1.7; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    ::selection { background: var(--coral); color: var(--void); }
+
+    #ecg-field { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+    body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.022) 2px, rgba(0,0,0,0.022) 4px); pointer-events: none; z-index: 1; }
+    nav, main, footer { position: relative; z-index: 2; }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; border-bottom: 1px solid var(--border); background: rgba(9,6,5,0.90); backdrop-filter: blur(20px); }
+    .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { display: flex; align-items: center; gap: 1rem; text-decoration: none; }
+    .nav-logo-mark { width: 32px; height: 32px; border: 1px solid var(--coral); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.7rem; color: var(--coral); box-shadow: 0 0 12px var(--coral-glow), inset 0 0 12px var(--coral-glow); animation: pulse-border 3s ease-in-out infinite; }
+    @keyframes pulse-border { 0%,100%{box-shadow:0 0 8px var(--coral-glow),inset 0 0 8px var(--coral-glow);}50%{box-shadow:0 0 20px rgba(255,107,107,0.22),inset 0 0 20px rgba(255,107,107,0.09);} }
+    .nav-logo-text { display: flex; flex-direction: column; gap: 1px; }
+    .nav-logo-name { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: 0.1em; text-transform: uppercase; line-height: 1; }
+    .nav-logo-sub { font-family: var(--font-mono); font-size: 0.55rem; color: var(--coral-dim); letter-spacing: 0.16em; text-transform: uppercase; }
+    .nav-status { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.65rem; color: var(--coral); letter-spacing: 0.1em; }
+    .nav-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--coral); animation: blink 2.4s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;}50%{opacity:0.15;} }
+    .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+    .nav-links a { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--coral); }
+    .nav-cta { border: 1px solid var(--coral-dim) !important; padding: 0.35rem 1rem; color: var(--coral) !important; transition: all 0.2s !important; }
+    .nav-cta:hover { background: var(--coral) !important; color: var(--void) !important; }
+
+    /* HERO */
+    #hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 0 5rem; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; width: 100%; }
+    .hero-pre { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; opacity: 0; animation: slideIn 0.6s ease forwards 0.3s; }
+    .hero-pre-line { width: 40px; height: 1px; background: var(--coral); }
+    .hero-pre-text { font-family: var(--font-mono); font-size: 0.7rem; color: var(--coral); letter-spacing: 0.2em; text-transform: uppercase; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(3.5rem, 10vw, 9rem); font-weight: 800; line-height: 0.96; letter-spacing: 0.01em; text-transform: uppercase; margin-bottom: 1.5rem; opacity: 0; animation: slideIn 0.7s ease forwards 0.5s; }
+    .hero-title .t1 { color: var(--text); display: block; }
+    .hero-title .t2 { background: linear-gradient(135deg, var(--coral), var(--warm)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: block; }
+    .hero-title .t3 { color: var(--text); display: block; }
+    .hero-sub { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 3rem; opacity: 0; animation: slideIn 0.6s ease forwards 0.7s; }
+    .hero-desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.85; max-width: 600px; margin-bottom: 3rem; opacity: 0; animation: slideIn 0.7s ease forwards 0.9s; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: slideIn 0.7s ease forwards 1.1s; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.6rem; background: var(--coral); color: var(--void); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; padding: 0.9rem 2rem; text-decoration: none; transition: all 0.2s; clip-path: polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px)); }
+    .btn-primary:hover { background: #fff; box-shadow: 0 0 30px rgba(255,107,107,0.4); transform: translateY(-2px); }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; padding: 0.9rem 1.5rem; text-decoration: none; border: 1px solid var(--border); transition: all 0.2s; }
+    .btn-ghost:hover { color: var(--text); border-color: var(--border-hi); }
+    .btn-article { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--coral); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; padding: 0.9rem 1.75rem; text-decoration: none; border: 1px solid var(--coral-dim); background: transparent; transition: all 0.2s; }
+    .btn-article:hover { background: var(--coral); color: var(--void); border-color: var(--coral); box-shadow: 0 0 24px rgba(255,107,107,0.25); transform: translateY(-2px); }
+
+    /* TICKER */
+    .ticker { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 0.6rem 0; overflow: hidden; background: var(--deep); }
+    .ticker-track { display: flex; gap: 3rem; animation: ticker 44s linear infinite; white-space: nowrap; }
+    .ticker-item { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.14em; text-transform: uppercase; display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+    .ticker-item span { color: var(--coral); }
+    @keyframes ticker { from{transform:translateX(0);}to{transform:translateX(-50%);} }
+
+    /* SHARED */
+    .section-pre { font-family: var(--font-mono); font-size: 0.65rem; color: var(--coral); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .section-title { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.25rem); font-weight: 700; color: var(--text); line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-desc { font-size: 0.95rem; color: var(--text-muted); max-width: 580px; line-height: 1.8; margin-bottom: 4rem; }
+    .body-p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.9; margin-bottom: 1.5rem; }
+
+    /* DATA TABLE */
+    .data-table { border: 1px solid var(--border); }
+    .data-row { display: grid; grid-template-columns: 160px 1fr; border-bottom: 1px solid var(--border); }
+    .data-row:last-child { border-bottom: none; }
+    .data-key { padding: 1rem 1.25rem; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; background: var(--deep); border-right: 1px solid var(--border); display: flex; align-items: center; }
+    .data-val { padding: 1rem 1.25rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text); display: flex; align-items: center; }
+    .data-val.accent { color: var(--coral); }
+
+    /* POSITION */
+    #position { padding: 7rem 0; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; }
+    .position-statement { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.65rem); font-weight: 700; line-height: 1.12; color: var(--text); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 2rem; }
+    .position-statement .hl { background: linear-gradient(135deg, var(--coral), var(--warm)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .axiom { display: flex; align-items: center; gap: 1.5rem; border: 1px solid var(--border); border-left: 3px solid var(--coral); padding: 1.25rem 2rem; background: var(--surface); margin-top: 2rem; }
+    .axiom-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; }
+    .axiom-text { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--coral); letter-spacing: 0.05em; text-transform: uppercase; }
+
+    /* PRINCIPLES */
+    #principles { background: var(--deep); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 7rem 0; }
+    .principles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 4rem; }
+    .p-card { background: var(--deep); padding: 2.75rem; position: relative; overflow: hidden; transition: background 0.25s; }
+    .p-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(to right, var(--coral), var(--warm)); transform: scaleX(0); transform-origin: left; transition: transform 0.35s ease; }
+    .p-card:hover { background: var(--surface); }
+    .p-card:hover::before { transform: scaleX(1); }
+    .pc-num { font-family: var(--font-mono); font-size: 0.6rem; color: var(--coral-dim); letter-spacing: 0.14em; margin-bottom: 1rem; }
+    .pc-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.75rem; line-height: 1.1; }
+    .pc-desc { font-size: 0.86rem; color: var(--text-muted); line-height: 1.8; }
+
+    /* COMMITMENT */
+    #commitment { padding: 7rem 0; }
+    .commit-box { margin-top: 2rem; padding: 2rem; border: 1px solid var(--border); background: var(--surface); position: relative; }
+    .commit-box::before { content: 'PTH MERIDIAN POSITION'; position: absolute; top: -0.6rem; left: 1.5rem; background: var(--surface); padding: 0 0.5rem; font-family: var(--font-mono); font-size: 0.6rem; color: var(--coral); letter-spacing: 0.14em; }
+    .commit-box p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.8; }
+    .commit-box p + p { margin-top: 1rem; }
+    .open-box { margin-top: 2rem; padding: 2rem; border: 1px solid var(--border); background: var(--surface); }
+    .open-box-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--coral); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 1rem; }
+    .open-box p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.75; }
+
+    /* FOOTER */
+    footer { background: var(--void); border-top: 1px solid var(--border); padding: 2.5rem 0; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+    .footer-left { display: flex; align-items: center; gap: 2rem; }
+    .footer-logo { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+    .footer-copy { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.06em; }
+    .footer-links { display: flex; gap: 2rem; list-style: none; }
+    .footer-links a { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-dim); text-decoration: none; letter-spacing: 0.08em; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--coral); }
+    .footer-credo { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; color: var(--coral); letter-spacing: 0.08em; opacity: 0.6; }
+
+    /* ANIMATIONS */
+    @keyframes slideIn { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      .two-col { grid-template-columns: 1fr; gap: 3rem; }
+      .principles-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .data-row { grid-template-columns: 130px 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="ecg-field"></canvas>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <div class="nav-logo-mark">PTH</div>
+        <div class="nav-logo-text">
+          <div class="nav-logo-name">PTH Meridian</div>
+          <div class="nav-logo-sub">Calgary, Alberta, Canada</div>
+        </div>
+      </a>
+      <div class="nav-status">
+        <div class="nav-status-dot"></div>
+        COLLABORATION &middot; INNOVATION &middot; NOT ELIMINATION
+      </div>
+      <ul class="nav-links">
+        <li><a href="security.html">Security</a></li>
+        <li><a href="health.html">Health</a></li>
+        <li><a href="energy.html">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+        <li><a href="index.html#contact" class="nav-cta">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- HERO -->
+    <section id="hero">
+      <div class="container">
+        <div class="hero-pre">
+          <div class="hero-pre-line"></div>
+          <div class="hero-pre-text">// AI Ethics &middot; PTH Meridian</div>
+        </div>
+        <h1 class="hero-title">
+          <span class="t1">Collaboration</span>
+          <span class="t2">and Innovation,</span>
+          <span class="t3">Not Elimination.</span>
+        </h1>
+        <div class="hero-sub">PTH Meridian &middot; Position on AI, Work and the Future of Employment</div>
+        <p class="hero-desc">Artificial intelligence is changing how we work, how we solve problems, and how we build the future. At PTH Meridian, we believe the right path forward is collaboration between human capability and machine intelligence — not the replacement of one with the other. Every tool we build is designed to keep people at the center of the work they do.</p>
+        <div class="hero-actions">
+          <a href="#position" class="btn-primary">Our position &rarr;</a>
+          <a href="index.html" class="btn-ghost">&larr; PTH Meridian</a>
+          <a href="Tammam_2026_AI_Collaboration_Employment.pdf" target="_blank" class="btn-article">Link to Article &nearr;</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- TICKER -->
+    <div class="ticker">
+      <div class="ticker-track">
+        <div class="ticker-item"><span>We believe</span> Augment human capability</div>
+        <div class="ticker-item"><span>We believe</span> Standard of living matters</div>
+        <div class="ticker-item"><span>We believe</span> People and progress together</div>
+        <div class="ticker-item"><span>We believe</span> Open source builds trust</div>
+        <div class="ticker-item"><span>We believe</span> Transitions must be managed with care</div>
+        <div class="ticker-item"><span>We build</span> Human by design</div>
+        <div class="ticker-item"><span>We believe</span> Augment human capability</div>
+        <div class="ticker-item"><span>We believe</span> Standard of living matters</div>
+        <div class="ticker-item"><span>We believe</span> People and progress together</div>
+        <div class="ticker-item"><span>We believe</span> Open source builds trust</div>
+        <div class="ticker-item"><span>We believe</span> Transitions must be managed with care</div>
+        <div class="ticker-item"><span>We build</span> Human by design</div>
+      </div>
+    </div>
+
+    <!-- POSITION STATEMENT -->
+    <section id="position">
+      <div class="container">
+        <div class="two-col">
+          <div class="reveal">
+            <div class="section-pre">// Where we stand</div>
+            <div class="position-statement">
+              Collaboration<br/>creates more<br/>than <span class="hl">elimination.</span>
+            </div>
+            <p class="body-p">Work is more than income. For most people it is identity, structure and a sense of contribution. We take that seriously — not as a philosophical abstraction, but as a practical design constraint. When we build a tool, we ask: does this make a person more capable, or does it simply make them unnecessary? That question shapes every decision we make.</p>
+            <p class="body-p">We are living through a genuine transition. AI is moving quickly, and institutions — training programs, labor frameworks, social infrastructure — move more slowly. We think the responsible path is not to resist the technology, but to make sure the people affected by the shift are supported through it.</p>
+            <p class="body-p">PTH Meridian does not speak for the industry, and we do not prescribe to others. We speak for what we build, how we build it, and what we want our work to stand for.</p>
+            <div class="axiom">
+              <div class="axiom-label">PTH Meridian &middot; Design principle</div>
+              <div class="axiom-text">AI and people work better together than either does alone.</div>
+            </div>
+          </div>
+
+          <div class="data-table reveal">
+            <div class="data-row">
+              <div class="data-key">Our approach</div>
+              <div class="data-val">Human-centered by design</div>
+            </div>
+            <div class="data-row">
+              <div class="data-key">Priority</div>
+              <div class="data-val accent">People before output</div>
+            </div>
+            <div class="data-row">
+              <div class="data-key">Design rule</div>
+              <div class="data-val">Augment capability — support human roles</div>
+            </div>
+            <div class="data-row">
+              <div class="data-key">Authority</div>
+              <div class="data-val">AI informs. Humans decide.</div>
+            </div>
+            <div class="data-row">
+              <div class="data-key">Transparency</div>
+              <div class="data-val">Open source. Limitations disclosed.</div>
+            </div>
+            <div class="data-row">
+              <div class="data-key">Standard</div>
+              <div class="data-val">Quality of life is a consideration, not a variable</div>
+            </div>
+            <div class="data-row">
+              <div class="data-key">Scope</div>
+              <div class="data-val">Security &middot; Health &middot; Energy &middot; Decisions</div>
+            </div>
+            <div class="data-row">
+              <div class="data-key">Built for</div>
+              <div class="data-val accent">The human using it</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOUR COMMITMENTS -->
+    <section id="principles">
+      <div class="container">
+        <div class="reveal">
+          <div class="section-pre">// How we build</div>
+          <h2 class="section-title">Four commitments<br/>in every tool we ship.</h2>
+          <p class="section-desc">These are the standards we hold ourselves to — embedded in our code, our documentation and our open-source releases.</p>
+        </div>
+        <div class="principles-grid">
+          <div class="p-card reveal">
+            <div class="pc-num">01 &middot; Augmentation</div>
+            <div class="pc-title">Make people<br/>more capable.</div>
+            <p class="pc-desc">Every PTH Meridian tool is built to extend what a person can do — not to replace the person doing it. AI surfaces patterns, processes data at scale and highlights what matters. The human reads it, judges it and acts on it. That loop always closes with a person in the role of decision-maker.</p>
+          </div>
+          <div class="p-card reveal">
+            <div class="pc-num">02 &middot; Quality of Life</div>
+            <div class="pc-title">Progress should<br/>raise the floor.</div>
+            <p class="pc-desc">We believe the gains that AI makes possible should be shared broadly. A smarter grid should lower energy costs. Better diagnostic tools should reach more patients. Stronger security should protect everyone, not only those who can afford it. That is the direction we build toward — and we encourage others to consider the same.</p>
+          </div>
+          <div class="p-card reveal">
+            <div class="pc-num">03 &middot; Human Authority</div>
+            <div class="pc-title">AI informs.<br/>People decide.</div>
+            <p class="pc-desc">In every domain we work in — security, health, energy, public decisions — the person using our tools retains authority over what happens next. We build strong analysis and clear signal. We do not build systems that make consequential decisions without a human in the loop. That is a line we hold in our own work.</p>
+          </div>
+          <div class="p-card reveal">
+            <div class="pc-num">04 &middot; Transparency</div>
+            <div class="pc-title">Open code.<br/>Honest limits.</div>
+            <p class="pc-desc">All PTH Meridian implementations are open source. We document our limitations clearly, before deployment. When we discovered a vulnerability in our ZKP module (CVE-AKR-NAOS-2026-001), we identified it, documented it, patched it and disclosed it ourselves — before any external engagement. Trust is built in exactly those moments.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OUR COMMITMENT -->
+    <section id="commitment">
+      <div class="container">
+        <div class="two-col">
+          <div class="reveal">
+            <div class="section-pre">// What this looks like in practice</div>
+            <h2 class="section-title">Our tools reflect<br/>our values.</h2>
+            <p class="body-p">PTH Meridian's four divisions each touch a domain where AI has the potential to create real benefit — and where carelessness could cause real harm. We keep that in mind at every stage of development.</p>
+            <p class="body-p">The Energy Division is building toward lower costs and more accessible infrastructure — because affordable energy is one of the most direct levers for improving quality of life, particularly as the labor landscape shifts. The Bioinformatics Division gives clinicians better tools to understand complex data — it extends the reach of the human practitioner. AMuN, our consequence mapping platform, makes the downstream effects of decisions visible before they are made — including decisions about deploying AI itself.</p>
+            <p class="body-p">We are a small, independent studio. We welcome collaboration with organizations — companies, institutions, governments — who approach these questions with similar seriousness. Building bridges matters. So does being clear about where we stand when we cross them.</p>
+          </div>
+          <div class="reveal">
+            <div class="commit-box">
+              <p>PTH Meridian tools are designed to augment human capability. Every system maintains human decision authority at the point of consequence. Our code is open, our limitations are disclosed, and our position on AI ethics is published and held publicly.</p>
+              <p>We are actively seeking partnerships with researchers, institutions and organizations who share a commitment to thoughtful, human-centered AI development. Independent review of our implementations is something we pursue — not something we resist.</p>
+              <p>We build what we believe. That is the only standard that holds.</p>
+            </div>
+            <div class="open-box">
+              <div class="open-box-label">// Open by design</div>
+              <p>All PTH Meridian implementations are published to github.com/PTHMeridian. Any researcher, institution or developer may inspect, verify and challenge our work. We consider that a feature, not a risk — because accountability is built in the open.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-logo">PTH Meridian</div>
+        <div class="footer-copy">&copy; 2026 Adel Tammam &middot; Calgary, Alberta, Canada</div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="security.html">Security</a></li>
+        <li><a href="health.html">Health</a></li>
+        <li><a href="energy.html">Energy</a></li>
+        <li><a href="decisions.html">Decisions</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+      <div class="footer-credo">Ask. Solve. Done.</div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Medically accurate normal sinus rhythm ECG ────────────────────────────
+    // Phases per cardiac cycle (normalized 0–1, ~72 bpm):
+    //   P wave      0.00–0.09   atrial depolarization   small smooth bump
+    //   PR segment  0.09–0.20   isoelectric flat
+    //   Q wave      0.20–0.24   small downward notch
+    //   R wave      0.24–0.30   tall sharp positive spike
+    //   S wave      0.30–0.36   small downward overshoot
+    //   ST segment  0.36–0.48   isoelectric flat (ventricular plateau)
+    //   T wave      0.48–0.70   broad rounded positive hump (repolarization)
+    //   TP interval 0.70–1.00   flat diastolic baseline
+
+    const canvas = document.getElementById('ecg-field');
+    const ctx    = canvas.getContext('2d');
+    let W, H;
+
+    function ecgSample(p) {
+      p = ((p % 1) + 1) % 1;
+      if (p < 0.09) return  Math.sin(p / 0.09 * Math.PI) * 0.16;           // P
+      if (p < 0.20) return  0;                                               // PR
+      if (p < 0.24) return -Math.sin((p - 0.20) / 0.04 * Math.PI) * 0.11;  // Q
+      if (p < 0.30) return  Math.sin((p - 0.24) / 0.06 * Math.PI) * 1.00;  // R
+      if (p < 0.36) return -Math.sin((p - 0.30) / 0.06 * Math.PI) * 0.16;  // S
+      if (p < 0.48) return  0;                                               // ST
+      if (p < 0.70) return  Math.sin((p - 0.48) / 0.22 * Math.PI) * 0.26;  // T
+      return 0;                                                              // TP
+    }
+
+    // Three traces — staggered vertically, identical waveform, very low opacity
+    const TRACES = [
+      { yFrac: 0.20, cycleW: 360, amp: 42, alpha: 0.052 },
+      { yFrac: 0.50, cycleW: 360, amp: 56, alpha: 0.034 },
+      { yFrac: 0.80, cycleW: 360, amp: 36, alpha: 0.024 },
+    ];
+
+    const SCROLL_SPEED = 0.50; // px per frame — calm, steady
+    let scrollX = 0;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      scrollX += SCROLL_SPEED;
+
+      TRACES.forEach(tr => {
+        const baseY = H * tr.yFrac;
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 2) {
+          const phase = ((x + scrollX) / tr.cycleW) % 1;
+          const y     = baseY - ecgSample(phase) * tr.amp;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = `rgba(255,107,107,${tr.alpha})`;
+        ctx.lineWidth   = 1;
+        ctx.stroke();
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    draw();
+
+    // Nav border on scroll
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').style.borderBottomColor =
+        window.scrollY > 40 ? 'rgba(56,37,24,0.85)' : 'var(--border)';
+    });
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.07 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  </script>
+
+</body>
+</html>
